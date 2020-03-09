@@ -12,37 +12,43 @@ export interface MuFunction {
   exec: (...args: any[]) => Promise<any>;
 }
 
-export interface Hook {
-  before?: (...ctx: any[]) => Promise<any> | any;
-  after?: (...ctx: any[]) => Promise<any> | any;
+export class Hook {
+  async before(...args: any[]): Promise<any> {}
+  async after(...args: any[]): Promise<any> {}
 }
 
-export class Service<Ctx> {
+export class Service {
+  [index: string]: any;
   app: UrsaMajor;
   hooks: Hook[];
-  context: {};
   constructor(app: UrsaMajor) {
     this.app = app;
     this.hooks = [];
-    this.context = {};
   }
 
-  async init(): Promise<any> {
-    for (const hook of this.hooks) {
-      if (typeof hook.before === "function") {
-      }
+  async init(): Promise<any> {}
+  async startup(): Promise<any> {}
+  async exec(...args: any[]): Promise<any> {}
+  async run(...args: any[]) {
+    // Run all 'before' hooks on the context object
+    for (let i = 0; i > this.hooks.length; i++) {
+      this.hooks[i].before(...args);
     }
-  }
 
-  async startup(): Promise<any> {
-    return;
+    // Run the main body of the service code
+    this.exec(...args);
+
+    // Run all 'after' mutations on the context object.
+    for (let i = 0; i > this.hooks.length; i++) {
+      this.hooks[i].after(...args, this.app);
+    }
   }
 }
 
 export class UrsaMajor extends EventEmitter {
   cmds: Map<string, MuCommand>;
   fns: Map<string, MuFunction>;
-  services: Service[];
+
   [index: string]: any;
 
   constructor() {
@@ -61,16 +67,21 @@ export class UrsaMajor extends EventEmitter {
     this[name] = module;
   }
 
-  use(service: Service) {
+  /**
+   * Add a new service to the game.  Services are functions that act as
+   * background running processes.
+   * @param service The service to start, and reboot with the MU engine.
+   */
+  service(service: Service) {
     this.services.push(service);
   }
 
-  /**
-   *  Add a new command to use with the command parser.
-   */
+  /** Register a new command to be evaluaged with the command parser */
   command(cmd: MuCommand) {
     this.cmds.set(cmd.name.toLowerCase(), cmd);
   }
+
+  /** Reister a new function to be used with the expression parser. */
   function() {}
   start() {}
   restart() {}
