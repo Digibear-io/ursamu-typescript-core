@@ -12,37 +12,18 @@ export interface MuFunction {
   exec: (...args: any[]) => Promise<any>;
 }
 
-export class Hook {
-  async before(...args: any[]): Promise<any> {}
-  async after(...args: any[]): Promise<any> {}
+export interface Service {
+  init(): any | Promise<any>;
+  reboot?(): any | Promise<any>;
 }
 
-export class Service {
-  [index: string]: any;
-  app: UrsaMajor;
-  hooks: Hook[];
-  constructor(app: UrsaMajor) {
-    this.app = app;
-    this.hooks = [];
-  }
-
-  async init(): Promise<any> {}
-  async startup(): Promise<any> {}
-  async exec(...args: any[]): Promise<any> {}
-  async run(...args: any[]) {
-    // Run all 'before' hooks on the context object
-    for (let i = 0; i > this.hooks.length; i++) {
-      this.hooks[i].before(...args);
-    }
-
-    // Run the main body of the service code
-    this.exec(...args);
-
-    // Run all 'after' mutations on the context object.
-    for (let i = 0; i > this.hooks.length; i++) {
-      this.hooks[i].after(...args, this.app);
-    }
-  }
+export interface DbAdapter extends Service {
+  model(...args: any[]): void | Promise<void>;
+  get(...args: any[]): any | Promise<any>;
+  find(...args: any[]): any | Promise<any>;
+  create(...args: any[]): any | Promise<any>;
+  update(...args: any[]): any | Promise<any>;
+  delete(...args: any[]): any | Promise<any>;
 }
 
 export class UrsaMajor extends EventEmitter {
@@ -53,8 +34,8 @@ export class UrsaMajor extends EventEmitter {
 
   constructor() {
     super();
-    this.cmds = new Map();
-    this.fns = new Map();
+    this.cmds = new Map<string, MuCommand>();
+    this.fns = new Map<string, MuFunction>();
     this.services = [];
   }
 
@@ -63,7 +44,7 @@ export class UrsaMajor extends EventEmitter {
    * @param name Tha name of the module to save to the game engine.
    * @param module The actual module to be attached to the game engine.
    */
-  register(name: string, module: Object) {
+  register(name: string, module: any) {
     this[name] = module;
   }
 
@@ -76,7 +57,9 @@ export class UrsaMajor extends EventEmitter {
     this.services.push(service);
   }
 
-  /** Register a new command to be evaluaged with the command parser */
+  /** Register a new command to be evaluaged with the command parser
+   * @param cmd The new Command object to be added.
+   */
   command(cmd: MuCommand) {
     this.cmds.set(cmd.name.toLowerCase(), cmd);
   }
