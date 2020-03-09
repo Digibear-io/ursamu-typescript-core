@@ -71,7 +71,12 @@ class NeDB implements DbAdapter {
     );
   }
 
-  update(query: any, data: any): Promise<DBObj> {
+  /**
+   * Update fields of the NeDB database
+   * @param query The NeDB query for the fields to be updated.
+   * @param data The data to update with
+   */
+  update(query: any, data: any): Promise<DBObj | DBObj[]> {
     return new Promise((resolve: any, reject: any) =>
       this.db?.update(
         query,
@@ -85,6 +90,10 @@ class NeDB implements DbAdapter {
     );
   }
 
+  /**
+   * Delete a a field from the NeDB instance.
+   * @param query The object to query against.
+   */
   delete(query: any): Promise<number> {
     return new Promise((resolve: any, reject: any) =>
       this.db?.remove(query, {}, (err: Error, n: number) => {
