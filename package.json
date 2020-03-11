@@ -1,20 +1,31 @@
 {
   "name": "mushbox",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "npx ts-node --project src/tsconfig.json src/connections"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Lemuel Lee Canady, Jr",
+  "license": "MIT",
   "devDependencies": {
+    "@types/body-parser": "^1.19.0",
+    "@types/cors": "^2.8.6",
+    "@types/express": "^4.17.3",
+    "@types/helmet": "0.0.45",
     "@types/nedb": "^1.8.9",
     "@types/node": "^13.9.0",
+    "@types/socket.io": "^2.1.4",
+    "ts-node": "^8.6.2",
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "nedb": "^1.8.0"
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "helmet": "^3.21.3",
+    "nedb": "^1.8.0",
+    "socket.io": "^2.3.0"
   }
 }
