@@ -2,9 +2,23 @@
   "name": "mushbox",
   "version": "0.1.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/.js",
+  "nodemonConfig": {
+    "ignore": [
+      "**/*.test.ts",
+      "**/*.spec.ts",
+      ".git",
+      "node_modules"
+    ],
+    "watch": [
+      "src"
+    ],
+    "exec": "npm start",
+    "ext": "ts"
+  },
   "scripts": {
-    "start": "npx ts-node --project src/tsconfig.json src/connections"
+    "start": "node --inspect=5858 -r ts-node/register  ./src/ursamu.ts",
+    "start:watch": "nodemon"
   },
   "keywords": [],
   "author": "Lemuel Lee Canady, Jr",
