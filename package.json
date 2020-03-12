@@ -1,8 +1,8 @@
 {
-  "name": "mushbox",
+  "name": "ursamu",
   "version": "0.1.0",
   "description": "",
-  "main": "dist/.js",
+  "main": "dist/ursaminor.js",
   "nodemonConfig": {
     "ignore": [
       "**/*.test.ts",
@@ -17,7 +17,7 @@
     "ext": "ts"
   },
   "scripts": {
-    "start": "node --inspect=5858 -r ts-node/register  ./src/ursamu.ts",
+    "start": "node --inspect=5858 -r ts-node/register  ./src/ursaminor.ts",
     "start:watch": "nodemon"
   },
   "keywords": [],
