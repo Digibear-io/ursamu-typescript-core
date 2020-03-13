@@ -1,3 +1,2 @@
-process.on("message", (data: any) => {
-  console.log(data);
-});
+//  Middleware system here
+process.on("message", (message: string) => process.send!(message));

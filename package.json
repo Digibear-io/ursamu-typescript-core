@@ -2,7 +2,7 @@
   "name": "ursamu",
   "version": "0.1.0",
   "description": "",
-  "main": "dist/ursaminor.js",
+  "main": "src/ursaminor.js",
   "nodemonConfig": {
     "ignore": [
       "**/*.test.ts",
@@ -35,6 +35,7 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
+    "@ts-stack/markdown": "^1.0.0",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",

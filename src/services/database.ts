@@ -1,4 +1,4 @@
-import { DbAdapter, UrsaMajor } from "../classes/ursamu";
+import { DbAdapter, UrsaMajor } from "../classes/ursamu.class";
 import DataStore from "nedb";
 
 export interface DBObj {

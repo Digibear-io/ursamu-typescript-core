@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UrsaMU Client</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="container">
+      <div id="input" contenteditable></div>
+      <ul id="feed"></ul>
+    </div>
+  </body>
+  <style>
+    * {
+      color: white;
+      background-color: black;
+      font-family: "Source Code Pro", monospace;
+      font-size: 1rem;
+      margin: 0;
+      padding: 0;
+      top: 0;
+      left: 0;
+    }
+
+    #container {
+      display: flex;
+      height: 95vh;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+      box-sizing: border-box;
+      flex-direction: column-reverse;
+    }
+
+    #input {
+      border: 1px;
+      border-style: solid;
+      border-color: rgba(255, 255, 255, 0.4);
+      border-radius: 5px;
+      margin-top: 16px;
+      min-height: 48px;
+      max-height: 112px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    ul {
+      padding: 0;
+      margin: 0;
+    }
+
+    ul li {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    p {
+      padding-top: 4px;
+      padding-bottom: 4px;
+      font-weight: lighter;
+    }
+
+    strong {
+      font-weight: bold;
+    }
+
+    .item {
+      width: 100%;
+      word-wrap: break-word;
+    }
+  </style>
+
+  <script src="/socket.io/socket.io.js"></script>
+
+  <script>
+    // Declare our variables.
+    const feed = document.getElementById("feed");
+    const socket = io("http://localhost:8080");
+    const input = document.getElementById("input");
+
+    // Monitor keypresses.  If the user hits enter, send
+    // the message off to the server!
+    input.addEventListener("keypress", ev => {
+      if (ev.keyCode === 13 && !ev.shiftKey) {
+        ev.preventDefault();
+        socket.send(input.innerText);
+        input.innerText = "";
+      }
+    });
+
+    // When a new message comes in, add it to the feed.
+    socket.on("message", data => {
+      const li = document.createElement("li");
+      li.className = "item";
+      li.innerHTML = data;
+      feed.appendChild(li);
+    });
+  </script>
+</html>
