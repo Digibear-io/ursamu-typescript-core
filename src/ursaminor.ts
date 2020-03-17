@@ -23,11 +23,13 @@ io.on("connection", (socket: Socket) => {
   socket.on("message", (message: string) => {
     ursaMajor.send(JSON.stringify({ id: socket.id, message }));
   });
+});
 
-  ursaMajor.on("message", (message: string) => {
-    const data = JSON.parse(message);
-    socket.send(Marked.parse(data.message));
-  });
+ursaMajor.on("message", (message: string) => {
+  let data;
+  data = JSON.parse(message);
+
+  io.to(data.id).send(Marked.parse(data.message));
 });
 
 server.listen(config.game.port, () =>

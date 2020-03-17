@@ -1,16 +1,17 @@
-import { DbAdapter, UrsaMajor } from "../classes/ursamu.class";
+import { DbAdapter, UrsaMajor } from "../classes/ursamajor.class";
 import DataStore from "nedb";
 
 export interface DBObj {
   _id?: string;
   name: string;
+  type: "thing" | "player" | "room";
   alias?: string;
   flags: string[];
   location: string;
   contents: string[];
 }
 
-class NeDB implements DbAdapter {
+export class NeDB implements DbAdapter {
   app: UrsaMajor;
   path: string;
   db: DataStore | undefined;
@@ -31,8 +32,8 @@ class NeDB implements DbAdapter {
   /** Initialize the database */
   init() {
     this.model();
-    this.app.register("db", this.db);
-    console.log(`Database Created: ${this.path}`);
+    this.app.register("db", this);
+    console.log(`Database loaded: ${this.path}`);
   }
 
   /** Create a new DBObj */
@@ -103,5 +104,3 @@ class NeDB implements DbAdapter {
     );
   }
 }
-
-export default (app: UrsaMajor, path: string) => new NeDB({ app, path });

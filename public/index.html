@@ -81,7 +81,7 @@
   <script>
     // Declare our variables.
     const feed = document.getElementById("feed");
-    const socket = io("http://localhost:8080");
+    const socket = io("http://localhost:8080/");
     const input = document.getElementById("input");
 
     // Monitor keypresses.  If the user hits enter, send
@@ -95,6 +95,7 @@
     });
 
     // When a new message comes in, add it to the feed.
+
     socket.on("message", data => {
       const li = document.createElement("li");
       li.className = "item";
