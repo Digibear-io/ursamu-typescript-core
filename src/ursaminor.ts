@@ -20,6 +20,7 @@ app.get("/", (req: Request, res: Response) =>
 
 // Handle new connections client connections.
 io.on("connection", (socket: Socket) => {
+  ursaMajor.send(JSON.stringify({ id: socket.id, command: "connect" }));
   socket.on("message", (message: string) => {
     ursaMajor.send(JSON.stringify({ id: socket.id, message }));
   });

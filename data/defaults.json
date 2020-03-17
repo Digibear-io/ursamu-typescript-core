@@ -1,0 +1,11 @@
+{
+  "defaultRoom": "Limbo",
+  "defaultDesc": "You See Nothing Special.",
+  "rooms": [
+    {
+      "name": "Limbo",
+      "desc": "This is the description for **Limbo**! Holy crap you made it!",
+      "exits": ["Room1", "Room2", "Room3"]
+    }
+  ]
+}

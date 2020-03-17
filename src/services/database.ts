@@ -6,6 +6,7 @@ export interface DBObj {
   name: string;
   type: "thing" | "player" | "room";
   alias?: string;
+  password?: string;
   flags: string[];
   location: string;
   contents: string[];

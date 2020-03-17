@@ -1,5 +1,6 @@
 import { resolve } from "path";
 import { NeDB } from "../services/database";
+import { readdirSync, readFileSync } from "fs";
 
 export type MiddlewareNext = (err: Error | null, data: string) => Promise<any>;
 
@@ -13,7 +14,7 @@ export interface MuCommand {
   name: string;
   pattern: RegExp;
   flags?: string;
-  exec: (id: string, match: any[]) => Promise<any>;
+  exec: (id: string, match: string[]) => Promise<string>;
 }
 
 export interface MuFunction {
@@ -40,6 +41,7 @@ export class UrsaMajor {
   cmds: Map<string, MuCommand>;
   fns: Map<string, MuFunction>;
   db: NeDB | DbAdapter;
+  txt: Map<string, string>;
   private plugins: Plugin[];
   private stack: MiddlewareLayer[];
 
@@ -52,9 +54,19 @@ export class UrsaMajor {
     });
     this.cmds = new Map<string, MuCommand>();
     this.fns = new Map<string, MuFunction>();
+    this.txt = new Map<string, string>();
     this.services = [];
     this.plugins = [];
     this.stack = [];
+  }
+
+  /**
+   * Load a text entry into the text file map.
+   * @param name Reference name for the file to be created.
+   * @param text The text to be entered. Markdown aware.
+   */
+  text(name: string, text: string) {
+    this.txt.set(name.toLowerCase(), text);
   }
 
   /**
@@ -65,10 +77,19 @@ export class UrsaMajor {
     plugin.forEach(plugin => this.plugins.push(plugin));
   }
 
+  /**
+   * Add a new middleware to text input stack.
+   * @param layer The layer to add to the middleware stack.
+   */
   use(layer: MiddlewareLayer) {
     this.stack.push(layer);
   }
 
+  /**
+   * Run a string through a series of middleware before it's
+   * returned to the client.
+   * @param data The string to be pushed through the pipeline.
+   */
   async handle(data: string) {
     let idx = 0;
 
@@ -139,7 +160,31 @@ export class UrsaMajor {
   /** Reister a new function to be used with the expression parser. */
   function() {}
 
+  /**
+   * Start the Ursamu game engine.
+   */
   async start() {
+    // load text files
+    const dir = readdirSync(resolve(__dirname, "../../text/"), {
+      encoding: "utf8",
+      withFileTypes: true
+    });
+
+    // load files.
+    dir.forEach(dirent => {
+      if (dirent.isFile() && dirent.name.toLowerCase().endsWith(".md")) {
+        const name = dirent.name?.split(".")[0].toLowerCase();
+        console.log(dirent.name);
+        const text = readFileSync(
+          resolve(__dirname, "../../text/" + dirent.name),
+          {
+            encoding: "utf8"
+          }
+        );
+        this.txt.set(name, text);
+      }
+    });
+
     //load the database
     this.db.init();
 
@@ -152,6 +197,5 @@ export class UrsaMajor {
     this.plugins.forEach(plugin => plugin(this));
   }
 
-  restart() {}
   shutdown() {}
 }
