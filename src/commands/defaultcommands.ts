@@ -10,6 +10,7 @@ export default (app: UrsaMajor) => {
     }
   });
 
+  // Create a new character.
   app.command({
     name: "create",
     pattern: /^c[reate]+?\s+?(.*)\s+?(.*)/i,
@@ -31,7 +32,8 @@ export default (app: UrsaMajor) => {
           flags: [],
           type: "player",
           location: "Limbo",
-          contents: []
+          contents: [],
+          attribites: []
         });
 
         if (!player) return "Error Condition";
@@ -39,6 +41,26 @@ export default (app: UrsaMajor) => {
       } else {
         return "That name is either unavailable or in use.";
       }
+    }
+  });
+
+  app.command({
+    name: "connect",
+    pattern: /^c[onnect]+?\s+?(.*)\s+?(.*)$/i,
+    exec: async (id: string, args: string[]) => {
+      let cursor = await app.db.find({
+        $where: function() {
+          return this.name.toLowerCase() === args[1].toLowerCase()
+            ? true
+            : false;
+        }
+      });
+
+      if (cursor.length > 0 && sha512(args[2]).match(cursor[0].password)) {
+        return "Welcome to the game!";
+      }
+
+      return "I can't find that account.";
     }
   });
 };

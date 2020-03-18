@@ -4,12 +4,19 @@ import DataStore from "nedb";
 export interface DBObj {
   _id?: string;
   name: string;
-  type: "thing" | "player" | "room";
+  type: "thing" | "player";
   alias?: string;
   password?: string;
+  attribites: Attribute[];
   flags: string[];
   location: string;
   contents: string[];
+}
+
+export interface Attribute {
+  name: string;
+  value: string;
+  lastEdit: string;
 }
 
 export class NeDB implements DbAdapter {
@@ -49,11 +56,11 @@ export class NeDB implements DbAdapter {
 
   /**
    * Get a single database document.
-   * @param id The ID of the document to cretae.
+   * @param query The query object to search for.
    */
-  get(id: string): Promise<DBObj> {
+  get(query: any): Promise<DBObj> {
     return new Promise((resolve: any, reject: any) =>
-      this.db?.findOne<DBObj>({ _id: id }, (err: Error, doc: DBObj) => {
+      this.db?.findOne<DBObj>(query, (err: Error, doc: DBObj) => {
         if (err) reject(err);
         return resolve(doc);
       })

@@ -5,7 +5,12 @@
     {
       "name": "Limbo",
       "desc": "This is the description for **Limbo**! Holy crap you made it!",
-      "exits": ["Room1", "Room2", "Room3"]
+      "exits": ["Room1"]
+    },
+    {
+      "name": "Room1",
+      "desc": "This is the description for Room #1!",
+      "exits": ["Limbo"]
     }
   ]
 }

@@ -2,6 +2,9 @@ import { resolve } from "path";
 import { NeDB } from "../services/database";
 import { readdirSync, readFileSync } from "fs";
 
+/**
+ *
+ */
 export type MiddlewareNext = (err: Error | null, data: string) => Promise<any>;
 
 export type MiddlewareLayer = (

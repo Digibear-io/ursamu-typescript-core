@@ -11,7 +11,7 @@ export default async (
   for (const cmd of Array.from(app.cmds.values())) {
     const { pattern, exec, flags } = cmd;
     const match = message.match(pattern);
-    console.log(match);
+
     if (match && !flags) {
       // Matching command found!
       // run the command and await results
