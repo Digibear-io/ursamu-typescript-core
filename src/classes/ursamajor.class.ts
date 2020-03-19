@@ -1,17 +1,40 @@
 import { resolve } from "path";
-import { NeDB } from "../services/database";
+import { NeDB } from "../services/database.service";
 import { readdirSync, readFileSync } from "fs";
+import { Socket } from "socket.io";
+import { Marked } from "@ts-stack/markdown";
 
 /**
  *
  */
-export type MiddlewareNext = (err: Error | null, data: string) => Promise<any>;
+export type MiddlewareNext = (
+  err: Error | null,
+  req: MuRequest
+) => Promise<any>;
 
 export type MiddlewareLayer = (
-  data: string,
+  data: MuRequest,
   next: MiddlewareNext,
-  app: UrsaMajor
-) => Promise<MiddlewareNext>;
+) => Promise<MuResponse>;
+
+export interface MuRequest {
+  socket: Socket;
+  payload: {
+    command: string;
+    message?: string;
+    [key: string]: any;
+  
+  };
+}
+
+export interface MuResponse {
+  id: string;
+  payload: {
+    command: string;
+    message?: string;
+    [key:string]: any;
+  };
+}
 
 export interface MuCommand {
   name: string;
@@ -41,7 +64,7 @@ export interface DbAdapter extends Service {
 export type Plugin = (app: UrsaMajor) => void;
 
 export class UrsaMajor {
-  cmds: Map<string, MuCommand>;
+  cmds: MuCommand[];
   fns: Map<string, MuFunction>;
   db: NeDB | DbAdapter;
   txt: Map<string, string>;
@@ -55,12 +78,42 @@ export class UrsaMajor {
       app: this,
       path: resolve(__dirname, "../../data/db.db")
     });
-    this.cmds = new Map<string, MuCommand>();
+    this.cmds = [];
     this.fns = new Map<string, MuFunction>();
     this.txt = new Map<string, string>();
     this.services = [];
     this.plugins = [];
     this.stack = [];
+  }
+
+  async process(req: MuRequest): Promise<MuResponse> {
+    const command = req.payload.command;
+    const socket = req.socket;
+    const message = req.payload.message;
+    const data = req.payload.data;
+
+    switch (command) {
+      case "message":
+        return this._handle(req);
+      case "connect":
+        return {
+          id: socket.id,
+          payload: {
+            command: "message",
+            message: this.txt.get("connect")
+              ? Marked.parse(this.txt.get("connect")!)
+              : "File Not Found!"
+          }
+        };
+      default:
+        return {
+          id: socket.id,
+          payload: {
+            command: "message",
+            message
+          }
+        };
+    }
   }
 
   /**
@@ -89,11 +142,10 @@ export class UrsaMajor {
   }
 
   /**
-   * Run a string through a series of middleware before it's
-   * returned to the client.
+   * Run a string through a series of middleware.
    * @param data The string to be pushed through the pipeline.
    */
-  async handle(data: string) {
+  private async _handle(req: MuRequest): Promise<MuResponse> {
     let idx = 0;
 
     /**
@@ -103,20 +155,28 @@ export class UrsaMajor {
      * @param data The string the middleware pipeline is going
      * to be working with
      */
-    const next = async (err: Error | null, data: string) => {
+    const next = async (
+      err: Error | null,
+      req: MuRequest
+    ): Promise<MuResponse> => {
       // Return early if there's an error, or if we've processed through
       // the entire stack.
       if (err != null) return Promise.reject(err);
-      if (idx === this.stack.length) return Promise.resolve(data);
+      if (idx === this.stack.length) {
+        return {
+          id: req.socket.id,
+          payload: req.payload
+        };
+      }
 
       // Grab a new layer from the stack
       const layer = this.stack[idx++];
       // Run the layer
-      return await layer(data, next, this);
+      return await layer(req, next);
     };
 
     // Return the modified data.
-    return await next(null, data).catch((err: Error) => next(err, data));
+    return await next(null, req).catch((err: Error) => next(err, req));
   }
 
   /**
@@ -157,7 +217,7 @@ export class UrsaMajor {
    * @param cmd The new Command object to be added.
    */
   command(cmd: MuCommand) {
-    this.cmds.set(cmd.name.toLowerCase(), cmd);
+    this.cmds.push(cmd);
   }
 
   /** Reister a new function to be used with the expression parser. */
@@ -202,3 +262,7 @@ export class UrsaMajor {
 
   shutdown() {}
 }
+
+const mu = new UrsaMajor();
+
+export default mu;

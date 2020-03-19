@@ -96,10 +96,11 @@
 
     // When a new message comes in, add it to the feed.
 
-    socket.on("message", data => {
+    socket.on("message", res => {
       const li = document.createElement("li");
       li.className = "item";
-      li.innerHTML = data;
+      console.log(res);
+      li.innerHTML = res.message;
       feed.appendChild(li);
     });
   </script>

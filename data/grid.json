@@ -3,7 +3,8 @@
   "defaultDesc": "You See Nothing Special.",
   "rooms": [
     {
-      "name": "Limbo",
+      "name": "Limbo#",
+      "display": "Limbo",
       "desc": "This is the description for **Limbo**! Holy crap you made it!",
       "exits": ["Room1"]
     },

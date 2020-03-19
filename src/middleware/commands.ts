@@ -1,27 +1,28 @@
-import { MiddlewareNext, UrsaMajor } from "../classes/ursamajor.class";
+import mu, { MiddlewareNext, MuRequest } from "../classes/ursamajor.class";
 
-export default async (
-  data: string = "{}",
-  next: MiddlewareNext,
-  app: UrsaMajor
-) => {
-  const { id = "", message = "" } = JSON.parse(data);
+export default async (req: MuRequest, next: MiddlewareNext) => {
+  const id = req.socket.id;
+  const message = req.payload.message;
   let matched = false;
 
-  for (const cmd of Array.from(app.cmds.values())) {
+  for (const cmd of mu.cmds) {
     const { pattern, exec, flags } = cmd;
-    const match = message.match(pattern);
+    const match = message?.match(pattern);
 
     if (match && !flags) {
       // Matching command found!
       // run the command and await results
       const results = await exec(id, match).catch((err: Error) =>
-        next(err, data)
+        next(err, req)
       );
 
       if (results) matched = true;
-      return next(null, JSON.stringify({ id, message: results, matched }));
+      req.payload.matched = matched;
+      req.payload.message = results;
+      return next(null, req);
     }
   }
-  return next(null, JSON.stringify({ id, message, matched }));
+
+  req.payload.matched = matched;
+  return next(null, req);
 };
