@@ -8,7 +8,9 @@
         "lvl": "10"
       },
       {
-        "": ""
+        "name": "connected",
+        "code": "c",
+        "lvl": 0
       }
     ]
   }
