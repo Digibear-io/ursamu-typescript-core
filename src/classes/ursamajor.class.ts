@@ -1,5 +1,5 @@
 import { resolve } from "path";
-import { NeDB } from "../services/database.service";
+import { NeDB, DBObj } from "../services/database.service";
 import { readdirSync, readFileSync } from "fs";
 import { Socket } from "socket.io";
 import { Marked } from "@ts-stack/markdown";
@@ -14,7 +14,7 @@ export type MiddlewareNext = (
 
 export type MiddlewareLayer = (
   data: MuRequest,
-  next: MiddlewareNext,
+  next: MiddlewareNext
 ) => Promise<MuResponse>;
 
 export interface MuRequest {
@@ -23,7 +23,6 @@ export interface MuRequest {
     command: string;
     message?: string;
     [key: string]: any;
-  
   };
 }
 
@@ -32,7 +31,7 @@ export interface MuResponse {
   payload: {
     command: string;
     message?: string;
-    [key:string]: any;
+    [key: string]: any;
   };
 }
 
@@ -66,7 +65,7 @@ export type Plugin = (app: UrsaMajor) => void;
 export class UrsaMajor {
   cmds: MuCommand[];
   fns: Map<string, MuFunction>;
-  db: NeDB | DbAdapter;
+  db: NeDB<DBObj> | DbAdapter;
   txt: Map<string, string>;
   private plugins: Plugin[];
   private stack: MiddlewareLayer[];
@@ -74,10 +73,7 @@ export class UrsaMajor {
   [index: string]: any;
 
   constructor() {
-    this.db = new NeDB({
-      app: this,
-      path: resolve(__dirname, "../../data/db.db")
-    });
+    this.db = new NeDB(resolve(__dirname, "../../data/db.db"));
     this.cmds = [];
     this.fns = new Map<string, MuFunction>();
     this.txt = new Map<string, string>();

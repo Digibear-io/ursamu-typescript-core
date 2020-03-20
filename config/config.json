@@ -1,5 +1,15 @@
 {
   "game": {
-    "port": 8080
+    "port": 8080,
+    "flags": [
+      {
+        "name": "immortal",
+        "code": "i",
+        "lvl": "10"
+      },
+      {
+        "": ""
+      }
+    ]
   }
 }
