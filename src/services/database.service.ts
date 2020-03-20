@@ -46,7 +46,7 @@ export class NeDB<T> implements DbAdapter {
   /** Initialize the database */
   init() {
     this.model();
-    this.app.register("db", this);
+    mu.register("db", this);
     console.log(`Database loaded: ${this.path}`);
   }
 
