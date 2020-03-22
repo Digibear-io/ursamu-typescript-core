@@ -1,24 +1,25 @@
-import { UrsaMajor } from "../classes/ursamajor.class";
+import mu from "../classes/ursamajor.class";
 import { sha512 } from "js-sha512";
+import db from "../database";
+import flags from "../flags";
 
-export default (app: UrsaMajor) => {
-  app.command({
+export default () => {
+  mu.addCmd({
     name: "Test",
     pattern: /^[+@]?test$/g,
     exec: async (id: string, args: any[]) => {
-      return "TESTING!!";
+      return "Made it!!";
     }
   });
 
   // Create a new character.
-  app.command({
+  mu.addCmd({
     name: "create",
     pattern: /^c[reate]+?\s+?(.*)\s+?(.*)/i,
     exec: async (id: string, args: string[]) => {
-      const [_, char, password] = args;
-
+      const [, char, password] = args;
       // Check to see if the name is in use.
-      const cursor = await app.db.find({
+      const cursor = await db.find({
         $where: function() {
           return this.name.toLowerCase() === char.toLowerCase() ? true : false;
         }
@@ -26,10 +27,10 @@ export default (app: UrsaMajor) => {
 
       // No matches, continue
       if (cursor.length <= 0) {
-        const player = await app.db.create({
+        const player = await db.create({
           name: char,
           password: sha512(password),
-          flags: [],
+          flags: ["connected"],
           type: "player",
           location: "Limbo",
           contents: [],
@@ -44,11 +45,11 @@ export default (app: UrsaMajor) => {
     }
   });
 
-  app.command({
+  mu.addCmd({
     name: "connect",
     pattern: /^c[onnect]+?\s+?(.*)\s+?(.*)$/i,
     exec: async (id: string, args: string[]) => {
-      let cursor = await app.db.find({
+      let cursor = await db.find({
         $where: function() {
           return this.name.toLowerCase() === args[1].toLowerCase()
             ? true
@@ -56,8 +57,13 @@ export default (app: UrsaMajor) => {
         }
       });
 
-      if (cursor.length > 0 && sha512(args[2]).match(cursor[0].password)) {
-        return "Welcome to the game!";
+      if (cursor[0].password) {
+        if (cursor.length > 0 && sha512(args[2]).match(cursor[0].password)) {
+          console.log(await flags.setFlag(cursor[0], "connected"));
+          return "Welcome to the game!";
+        }
+      } else {
+        return "That's not a valid account.";
       }
 
       return "I can't find that account.";

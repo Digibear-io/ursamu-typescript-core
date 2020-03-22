@@ -1,11 +1,11 @@
 {
   "game": {
-    "port": 8080,
+    "port": 8090,
     "flags": [
       {
         "name": "immortal",
         "code": "i",
-        "lvl": "10"
+        "lvl": 10
       },
       {
         "name": "connected",

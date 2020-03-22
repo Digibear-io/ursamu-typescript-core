@@ -17,8 +17,8 @@
     "ext": "ts"
   },
   "scripts": {
-    "start": "node --inspect=5858 -r ts-node/register  ./src/ursamu.ts",
-    "start:watch": "nodemon"
+    "prestart": "npx tsc -p ./src/tsconfig.json",
+    "start": "node ./dist/ursamu.js"
   },
   "keywords": [],
   "author": "Lemuel Lee Canady, Jr",

@@ -1,12 +1,13 @@
 import express, { Request, Response } from "express";
 import { Server } from "http";
 import socketio, { Socket } from "socket.io";
-import config from "../config/config.json";
+import config from "./config/config.json";
 import { resolve } from "path";
 import { Marked } from "@ts-stack/markdown";
 import mu, { MuResponse } from "./classes/ursamajor.class";
 import commands from "./middleware/commands";
 import dfltCmds from "./commands/defaultcommands";
+import text from "./text";
 
 // Define the various communication channels.
 const app = express();
@@ -43,11 +44,13 @@ io.on("connection", async (socket: Socket) => {
   });
 });
 
-mu.use(commands)
-mu.plugin(dfltCmds)
-
+mu.use(commands);
+dfltCmds();
+text.load("../text/");
 
 server.listen(config.game.port, () => {
   mu.start();
   console.log(`Server started on port: ${config.game.port}`);
 });
+
+process.on("SIGINT", () => process.exit(1));

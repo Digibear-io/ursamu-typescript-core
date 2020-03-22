@@ -1,12 +1,7 @@
-import { resolve } from "path";
-import { NeDB, DBObj } from "../services/database.service";
-import { readdirSync, readFileSync } from "fs";
 import { Socket } from "socket.io";
 import { Marked } from "@ts-stack/markdown";
+import text from "../text";
 
-/**
- *
- */
 export type MiddlewareNext = (
   err: Error | null,
   req: MuRequest
@@ -25,7 +20,6 @@ export interface MuRequest {
     [key: string]: any;
   };
 }
-
 export interface MuResponse {
   id: string;
   payload: {
@@ -35,49 +29,23 @@ export interface MuResponse {
   };
 }
 
-export interface MuCommand {
-  name: string;
-  pattern: RegExp;
-  flags?: string;
-  exec: (id: string, match: string[]) => Promise<string>;
-}
-
 export interface MuFunction {
   name: string;
   exec: (...args: any[]) => Promise<any>;
 }
 
-export interface Service {
-  init(): any | Promise<any>;
-}
-
-export interface DbAdapter extends Service {
-  model(...args: any[]): void | Promise<void>;
-  get(...args: any[]): any | Promise<any>;
-  find(...args: any[]): any | Promise<any>;
-  create(...args: any[]): any | Promise<any>;
-  update(...args: any[]): any | Promise<any>;
-  delete(...args: any[]): any | Promise<any>;
-}
-
 export type Plugin = (app: UrsaMajor) => void;
 
 export class UrsaMajor {
-  cmds: MuCommand[];
   fns: Map<string, MuFunction>;
-  db: NeDB<DBObj> | DbAdapter;
-  txt: Map<string, string>;
   private plugins: Plugin[];
   private stack: MiddlewareLayer[];
 
   [index: string]: any;
 
   constructor() {
-    this.db = new NeDB(resolve(__dirname, "../../data/db.db"));
     this.cmds = [];
     this.fns = new Map<string, MuFunction>();
-    this.txt = new Map<string, string>();
-    this.services = [];
     this.plugins = [];
     this.stack = [];
   }
@@ -96,8 +64,8 @@ export class UrsaMajor {
           id: socket.id,
           payload: {
             command: "message",
-            message: this.txt.get("connect")
-              ? Marked.parse(this.txt.get("connect")!)
+            message: text.get("connect")
+              ? Marked.parse(text.get("connect"))
               : "File Not Found!"
           }
         };
@@ -110,15 +78,6 @@ export class UrsaMajor {
           }
         };
     }
-  }
-
-  /**
-   * Load a text entry into the text file map.
-   * @param name Reference name for the file to be created.
-   * @param text The text to be entered. Markdown aware.
-   */
-  text(name: string, text: string) {
-    this.txt.set(name.toLowerCase(), text);
   }
 
   /**
@@ -175,47 +134,6 @@ export class UrsaMajor {
     return await next(null, req).catch((err: Error) => next(err, req));
   }
 
-  /**
-   * Assign a different database adapter other than Nedb.
-   * @param adapter The database adapter for UrsaMU to use.
-   */
-  database(adapter: DbAdapter) {
-    this.db = adapter;
-  }
-
-  /**
-   * Register a module to be used with the instance of the game engine.
-   * @param name Tha name of the module to save to the game engine.
-   * @param module The actual module to be attached to the game engine.
-   */
-  register(...args: any[]) {
-    if (args.length === 1) {
-      // Only one arg is given and it has a name property.
-      this[args[0].name] = args[0];
-    } else if (args.length === 2 && typeof args[0] === "string") {
-      // Two args, and the first is a string.
-      this[args[0]] = args[1];
-    } else {
-      throw new Error("Unknown module");
-    }
-  }
-
-  /**
-   * Add a new service to the game.  Services are functions that act as
-   * background running processes.
-   * @param service The service to start, and reboot with the MU engine.
-   */
-  service(service: Service) {
-    this.services.push(service);
-  }
-
-  /** Register a new command to be evaluaged with the command parser
-   * @param cmd The new Command object to be added.
-   */
-  command(cmd: MuCommand) {
-    this.cmds.push(cmd);
-  }
-
   /** Reister a new function to be used with the expression parser. */
   function() {}
 
@@ -223,35 +141,6 @@ export class UrsaMajor {
    * Start the Ursamu game engine.
    */
   async start() {
-    // load text files
-    const dir = readdirSync(resolve(__dirname, "../../text/"), {
-      encoding: "utf8",
-      withFileTypes: true
-    });
-
-    // load files.
-    dir.forEach(dirent => {
-      if (dirent.isFile() && dirent.name.toLowerCase().endsWith(".md")) {
-        const name = dirent.name?.split(".")[0].toLowerCase();
-        console.log(dirent.name);
-        const text = readFileSync(
-          resolve(__dirname, "../../text/" + dirent.name),
-          {
-            encoding: "utf8"
-          }
-        );
-        this.txt.set(name, text);
-      }
-    });
-
-    //load the database
-    this.db.init();
-
-    // Load services
-    for (const service of this.services) {
-      await service.init();
-    }
-
     // Load plugins
     this.plugins.forEach(plugin => plugin(this));
   }

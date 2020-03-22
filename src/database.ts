@@ -1,5 +1,5 @@
-import mu, { DbAdapter, UrsaMajor } from "../classes/ursamajor.class";
 import DataStore from "nedb";
+import { resolve } from "path";
 
 export interface DBObj {
   _id?: string;
@@ -15,6 +15,15 @@ export interface DBObj {
   exits?: string[];
 }
 
+export class DbAdapter {
+  model(...args: any[]): void | Promise<void> {}
+  get(...args: any[]): any | Promise<any> {}
+  find(...args: any[]): any | Promise<any> {}
+  create(...args: any[]): any | Promise<any> {}
+  update(...args: any[]): any | Promise<any> {}
+  delete(...args: any[]): any | Promise<any> {}
+}
+
 export interface Attribute {
   name: string;
   value: string;
@@ -22,31 +31,28 @@ export interface Attribute {
 }
 
 export class NeDB<T> implements DbAdapter {
-  app: UrsaMajor;
   path?: string;
   db: DataStore | undefined;
 
   constructor(path?: string) {
-    this.app = mu;
     this.path = path || "";
   }
 
   /** create the database model  */
   model() {
     if (this.path) {
-      this.db = new DataStore({
+      this.db = new DataStore<T>({
         filename: this.path,
         autoload: true
       });
     } else {
-      this.db = new DataStore();
+      this.db = new DataStore<T>();
     }
   }
 
   /** Initialize the database */
   init() {
     this.model();
-    mu.register("db", this);
     console.log(`Database loaded: ${this.path}`);
   }
 
@@ -77,7 +83,7 @@ export class NeDB<T> implements DbAdapter {
    * Find an array of documents that match the query
    * @param query The query object.
    */
-  find(query: any): Promise<T | T[]> {
+  find(query: any): Promise<T[]> {
     return new Promise((resolve: any, reject: any) =>
       this.db?.find<T>(query, (err: Error, docs: any[]) => {
         if (err) reject(err);
@@ -98,7 +104,7 @@ export class NeDB<T> implements DbAdapter {
         data,
         { returnUpdatedDocs: true },
         (err: Error, _, docs: T) => {
-          if (err) reject(err);
+          if (err) return reject(err);
           return resolve(docs);
         }
       )
@@ -118,3 +124,7 @@ export class NeDB<T> implements DbAdapter {
     );
   }
 }
+
+const db = new NeDB<DBObj>(resolve(__dirname, "../data/ursa.db"));
+db.init();
+export default db;
