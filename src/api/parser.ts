@@ -1,6 +1,6 @@
 import { Socket } from "socket.io";
 import { Marked } from "@ts-stack/markdown";
-import text from "../text";
+import text from "../api/text";
 
 export type MiddlewareNext = (
   err: Error | null,
@@ -29,24 +29,10 @@ export interface MuResponse {
   };
 }
 
-export interface MuFunction {
-  name: string;
-  exec: (...args: any[]) => Promise<any>;
-}
-
-export type Plugin = (app: UrsaMajor) => void;
-
-export class UrsaMajor {
-  fns: Map<string, MuFunction>;
-  private plugins: Plugin[];
+export class Parser {
   private stack: MiddlewareLayer[];
 
-  [index: string]: any;
-
   constructor() {
-    this.cmds = [];
-    this.fns = new Map<string, MuFunction>();
-    this.plugins = [];
     this.stack = [];
   }
 
@@ -78,14 +64,6 @@ export class UrsaMajor {
           }
         };
     }
-  }
-
-  /**
-   * Add a new plugin or list of plugins to the system.
-   * @param plugin Either a single, or a list of plugins.
-   */
-  plugin(...plugin: Plugin[]) {
-    plugin.forEach(plugin => this.plugins.push(plugin));
   }
 
   /**
@@ -133,21 +111,7 @@ export class UrsaMajor {
     // Return the modified data.
     return await next(null, req).catch((err: Error) => next(err, req));
   }
-
-  /** Reister a new function to be used with the expression parser. */
-  function() {}
-
-  /**
-   * Start the Ursamu game engine.
-   */
-  async start() {
-    // Load plugins
-    this.plugins.forEach(plugin => plugin(this));
-  }
-
-  shutdown() {}
 }
 
-const mu = new UrsaMajor();
-
-export default mu;
+const parser = new Parser();
+export default parser;

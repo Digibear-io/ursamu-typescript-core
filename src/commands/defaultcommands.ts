@@ -1,7 +1,7 @@
 import { sha512 } from "js-sha512";
-import db from "../database";
-import flags from "../flags";
-import cmds from "../cmds";
+import db from "../api/database";
+import flags from "../api/flags";
+import cmds from "../api/cmds";
 export default () => {
   cmds.add({
     name: "Test",

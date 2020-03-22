@@ -4,10 +4,11 @@ import socketio, { Socket } from "socket.io";
 import config from "./config/config.json";
 import { resolve } from "path";
 import { Marked } from "@ts-stack/markdown";
-import mu, { MuResponse } from "./classes/ursamajor.class";
 import commands from "./middleware/commands";
 import dfltCmds from "./commands/defaultcommands";
-import text from "./text";
+import text from "./api/text";
+import parser, { MuResponse } from "./api/parser";
+import mu from "./api/mu";
 
 // Define the various communication channels.
 const app = express();
@@ -20,7 +21,7 @@ app.get("/", (req: Request, res: Response) =>
 
 // Handle new client connections.
 io.on("connection", async (socket: Socket) => {
-  const { id, payload }: MuResponse = await mu.process({
+  const { id, payload }: MuResponse = await parser.process({
     socket: socket,
     payload: {
       command: "connect"
@@ -32,7 +33,7 @@ io.on("connection", async (socket: Socket) => {
   // When a new message comes from the MU, process
   // it and return the results.
   socket.on("message", async (message: string) => {
-    const { id, payload }: MuResponse = await mu.process({
+    const { id, payload }: MuResponse = await parser.process({
       socket,
       payload: { command: "message", message }
     });
@@ -44,9 +45,9 @@ io.on("connection", async (socket: Socket) => {
   });
 });
 
-mu.use(commands);
+parser.use(commands);
 dfltCmds();
-text.load("../text/");
+text.load("../../text/");
 
 server.listen(config.game.port, () => {
   mu.start();

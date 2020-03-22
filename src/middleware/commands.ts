@@ -1,5 +1,5 @@
-import { MiddlewareNext, MuRequest } from "../classes/ursamajor.class";
-import cmds from "../cmds";
+import { MiddlewareNext, MuRequest } from "../api/parser";
+import cmds from "../api/cmds";
 
 export default async (req: MuRequest, next: MiddlewareNext) => {
   const id = req.socket.id;

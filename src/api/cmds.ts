@@ -83,7 +83,7 @@ export class MuCommand {
   }
 }
 
-class commands {
+export class Commands {
   cmds: MuCommand[];
 
   constructor() {
@@ -131,5 +131,5 @@ class commands {
   }
 }
 
-const cmds = new commands();
+const cmds = new Commands();
 export default cmds;

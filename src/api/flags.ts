@@ -1,4 +1,4 @@
-import { game } from "./config/config.json";
+import { game } from "../config/config.json";
 import db, { DBObj } from "./database";
 
 export interface Flag {
