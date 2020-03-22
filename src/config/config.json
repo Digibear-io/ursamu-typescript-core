@@ -1,0 +1,17 @@
+{
+  "game": {
+    "port": 8090,
+    "flags": [
+      {
+        "name": "immortal",
+        "code": "i",
+        "lvl": 10
+      },
+      {
+        "name": "connected",
+        "code": "c",
+        "lvl": 0
+      }
+    ]
+  }
+}

@@ -1,16 +1,27 @@
-import { DbAdapter, UrsaMajor } from "../classes/ursamajor.class";
 import DataStore from "nedb";
+import { resolve } from "path";
 
 export interface DBObj {
   _id?: string;
+  id?: string;
   name: string;
-  type: "thing" | "player";
+  type: "thing" | "player" | "room" | "exit";
   alias?: string;
   password?: string;
   attribites: Attribute[];
   flags: string[];
-  location: string;
+  location?: string;
   contents: string[];
+  exits?: string[];
+}
+
+export class DbAdapter {
+  model(...args: any[]): void | Promise<void> {}
+  get(...args: any[]): any | Promise<any> {}
+  find(...args: any[]): any | Promise<any> {}
+  create(...args: any[]): any | Promise<any> {}
+  update(...args: any[]): any | Promise<any> {}
+  delete(...args: any[]): any | Promise<any> {}
 }
 
 export interface Attribute {
@@ -19,35 +30,36 @@ export interface Attribute {
   lastEdit: string;
 }
 
-export class NeDB implements DbAdapter {
-  app: UrsaMajor;
-  path: string;
+export class NeDB<T> implements DbAdapter {
+  path?: string;
   db: DataStore | undefined;
 
-  constructor({ app, path }: { app: UrsaMajor; path: string }) {
-    this.app = app;
-    this.path = path;
+  constructor(path?: string) {
+    this.path = path || "";
   }
 
   /** create the database model  */
   model() {
-    this.db = new DataStore({
-      filename: this.path,
-      autoload: true
-    });
+    if (this.path) {
+      this.db = new DataStore<T>({
+        filename: this.path,
+        autoload: true
+      });
+    } else {
+      this.db = new DataStore<T>();
+    }
   }
 
   /** Initialize the database */
   init() {
     this.model();
-    this.app.register("db", this);
     console.log(`Database loaded: ${this.path}`);
   }
 
   /** Create a new DBObj */
-  create(data: DBObj): Promise<DBObj> {
+  create(data: T): Promise<T> {
     return new Promise((resolve: any, reject: any) =>
-      this.db?.insert(data, (err: Error, doc: DBObj) => {
+      this.db?.insert(data, (err: Error, doc: T) => {
         if (err) reject(err);
         return resolve(doc);
       })
@@ -58,9 +70,9 @@ export class NeDB implements DbAdapter {
    * Get a single database document.
    * @param query The query object to search for.
    */
-  get(query: any): Promise<DBObj> {
+  get(query: any): Promise<T> {
     return new Promise((resolve: any, reject: any) =>
-      this.db?.findOne<DBObj>(query, (err: Error, doc: DBObj) => {
+      this.db?.findOne<T>(query, (err: Error, doc: any) => {
         if (err) reject(err);
         return resolve(doc);
       })
@@ -71,9 +83,9 @@ export class NeDB implements DbAdapter {
    * Find an array of documents that match the query
    * @param query The query object.
    */
-  find(query: any): Promise<DBObj | DBObj[]> {
+  find(query: any): Promise<T[]> {
     return new Promise((resolve: any, reject: any) =>
-      this.db?.find<DBObj>(query, (err: Error, docs: DBObj[]) => {
+      this.db?.find<T>(query, (err: Error, docs: any[]) => {
         if (err) reject(err);
         return resolve(docs);
       })
@@ -85,14 +97,14 @@ export class NeDB implements DbAdapter {
    * @param query The NeDB query for the fields to be updated.
    * @param data The data to update with
    */
-  update(query: any, data: any): Promise<DBObj | DBObj[]> {
+  update(query: any, data: T): Promise<T | T[]> {
     return new Promise((resolve: any, reject: any) =>
       this.db?.update(
         query,
         data,
         { returnUpdatedDocs: true },
-        (err: Error, _, docs: DBObj) => {
-          if (err) reject(err);
+        (err: Error, _, docs: T) => {
+          if (err) return reject(err);
           return resolve(docs);
         }
       )
@@ -112,3 +124,7 @@ export class NeDB implements DbAdapter {
     );
   }
 }
+
+const db = new NeDB<DBObj>(resolve(__dirname, "../data/ursa.db"));
+db.init();
+export default db;

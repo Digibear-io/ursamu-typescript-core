@@ -17,8 +17,8 @@
     "ext": "ts"
   },
   "scripts": {
-    "start": "node --inspect=5858 -r ts-node/register  ./src/ursaminor.ts",
-    "start:watch": "nodemon"
+    "prestart": "npx tsc -p ./src/tsconfig.json",
+    "start": "node ./dist/ursamu.js"
   },
   "keywords": [],
   "author": "Lemuel Lee Canady, Jr",
@@ -31,6 +31,7 @@
     "@types/js-sha512": "^0.7.0",
     "@types/nedb": "^1.8.9",
     "@types/node": "^13.9.0",
+    "@types/shortid": "0.0.29",
     "@types/socket.io": "^2.1.4",
     "ts-node": "^8.6.2",
     "typescript": "^3.8.3"
@@ -43,6 +44,7 @@
     "helmet": "^3.21.3",
     "js-sha512": "^0.8.0",
     "nedb": "^1.8.0",
+    "shortid": "^2.2.15",
     "socket.io": "^2.3.0"
   }
 }
