@@ -1,10 +1,9 @@
-import mu from "../classes/ursamajor.class";
 import { sha512 } from "js-sha512";
 import db from "../database";
 import flags from "../flags";
-
+import cmds from "../cmds";
 export default () => {
-  mu.addCmd({
+  cmds.add({
     name: "Test",
     pattern: /^[+@]?test$/g,
     exec: async (id: string, args: any[]) => {
@@ -13,7 +12,7 @@ export default () => {
   });
 
   // Create a new character.
-  mu.addCmd({
+  cmds.add({
     name: "create",
     pattern: /^c[reate]+?\s+?(.*)\s+?(.*)/i,
     exec: async (id: string, args: string[]) => {
@@ -45,7 +44,7 @@ export default () => {
     }
   });
 
-  mu.addCmd({
+  cmds.add({
     name: "connect",
     pattern: /^c[onnect]+?\s+?(.*)\s+?(.*)$/i,
     exec: async (id: string, args: string[]) => {

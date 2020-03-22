@@ -1,14 +1,28 @@
 import { types } from "util";
 
+type Exec = (id: string, args: string[]) => Promise<string>;
+
 export class MuCommand {
   private _pattern: RegExp | string;
   flags: string;
   name: string;
+  exec: Exec;
 
-  constructor(name: string, pattern?: string | RegExp) {
+  constructor({
+    name,
+    flags,
+    pattern,
+    exec
+  }: {
+    name: string;
+    flags?: string;
+    pattern: RegExp | string;
+    exec: Exec;
+  }) {
     this.name = name;
-    this._pattern = "";
+    this._pattern = pattern;
     this.flags = "";
+    this.exec = exec;
   }
 
   /**
@@ -25,16 +39,6 @@ export class MuCommand {
    */
   set pattern(str: string | RegExp) {
     this._pattern = str;
-  }
-
-  /**
-   * Execute the command.
-   * @param id The ID of the socket that invoked the command.
-   * @param args The arguments captured from the wildcard strings
-   * /RegExp of the command.
-   */
-  async exec(id: string, args: string[]): Promise<string> {
-    return "#-1 Command Undefined.";
   }
 
   /**
@@ -90,7 +94,18 @@ class commands {
    * Add a new command to the system.
    * @param command The command object to be added to the system
    */
-  add(command: MuCommand) {
+  add({
+    name,
+    flags,
+    pattern,
+    exec
+  }: {
+    name: string;
+    flags?: string;
+    pattern: RegExp | string;
+    exec: Exec;
+  }) {
+    const command = new MuCommand({ name, flags, pattern, exec });
     this.cmds.push(command);
   }
 
