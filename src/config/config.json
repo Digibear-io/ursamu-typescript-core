@@ -1,6 +1,7 @@
 {
   "game": {
     "port": 8090,
+    "startingRoom": "Limbo",
     "flags": [
       {
         "name": "immortal",

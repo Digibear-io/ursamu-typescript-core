@@ -35,7 +35,7 @@ class Flags {
    * @param flgs The list of flags to check against.
    */
   hasFlags(tar: DBObj, flgs: string) {
-    flgs
+    return flgs
       .split(" ")
       .map(flag => (tar.flags.indexOf(flag) ? true : false))
       .indexOf(false)
@@ -55,7 +55,6 @@ class Flags {
       tar.flags = Array.from(flagSet);
       return await db.update({ _id: tar._id }, tar);
     }
-
     return false;
   }
 
@@ -78,6 +77,22 @@ class Flags {
   async remFlag(tar: DBObj, flag: string) {
     tar.flags = tar.flags.filter(flag => flag !== this.flagName(flag));
     return await db.update({ _id: tar._id }, tar);
+  }
+
+  /**
+   * Find a characters bitlevel (permission level).  The higher the level,
+   * the more engine permissions.
+   * @param tar The Target DBObj to compare.
+   */
+  private _bitLvl(tar: DBObj) {
+    return this.flags
+      .filter(flag => tar.flags.indexOf(flag.name))
+      .map(flag => flag.lvl)
+      .reduce((prev: number, curr: number) => (prev > curr ? prev : curr), 0);
+  }
+
+  canEdit(en: DBObj, tar: DBObj) {
+    return this._bitLvl(en) >= this._bitLvl(tar) ? true : false;
   }
 }
 

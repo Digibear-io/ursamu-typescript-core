@@ -3,25 +3,27 @@ import { resolve } from "path";
 
 export interface DBObj {
   _id?: string;
-  id?: string;
+  id: string;
+  desc: string;
   name: string;
   type: "thing" | "player" | "room" | "exit";
   alias?: string;
   password?: string;
   attribites: Attribute[];
   flags: string[];
-  location?: string;
+  location: string;
   contents: string[];
   exits?: string[];
+  owner?: string;
 }
 
-export class DbAdapter {
-  model(...args: any[]): void | Promise<void> {}
-  get(...args: any[]): any | Promise<any> {}
-  find(...args: any[]): any | Promise<any> {}
-  create(...args: any[]): any | Promise<any> {}
-  update(...args: any[]): any | Promise<any> {}
-  delete(...args: any[]): any | Promise<any> {}
+export abstract class DbAdapter {
+  abstract model(...args: any[]): any | Promise<any>;
+  abstract get(...args: any[]): any | Promise<any>;
+  abstract find(...args: any[]): any | Promise<any>;
+  abstract create(...args: any[]): any | Promise<any>;
+  abstract update(...args: any[]): any | Promise<any>;
+  abstract delete(...args: any[]): any | Promise<any>;
 }
 
 export interface Attribute {
@@ -125,6 +127,6 @@ export class NeDB<T> implements DbAdapter {
   }
 }
 
-const db = new NeDB<DBObj>(resolve(__dirname, "../data/ursa.db"));
+const db = new NeDB<DBObj>(resolve(__dirname, "../../data/ursa.db"));
 db.init();
 export default db;

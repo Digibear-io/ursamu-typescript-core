@@ -1,4 +1,7 @@
 import { types } from "util";
+import { loadDir } from "./utils";
+import mu from "./mu";
+import { Marked } from "@ts-stack/markdown";
 
 type Exec = (id: string, args: string[]) => Promise<string>;
 
@@ -21,7 +24,7 @@ export class MuCommand {
   }) {
     this.name = name;
     this._pattern = pattern;
-    this.flags = "";
+    this.flags = flags || "";
     this.exec = exec;
   }
 
@@ -88,6 +91,16 @@ export class Commands {
 
   constructor() {
     this.cmds = [];
+    this.init();
+  }
+
+  /**
+   * Initiate the object.
+   */
+  init() {
+    loadDir("../commands/", (name: string) =>
+      console.log(`Module loaded: ${name}`)
+    );
   }
 
   /**
@@ -128,6 +141,22 @@ export class Commands {
         }
       })
       .filter(Boolean)[0];
+  }
+
+  async force(id: string, name: string, args: string[] = []) {
+    const response = {
+      id,
+      payload: {
+        command: name,
+        message: await this.cmds
+          .filter(cmd => cmd.name.toLowerCase() === name.toLowerCase())[0]
+          .exec(id, args)
+      }
+    };
+
+    if (response.payload.message)
+      response.payload.message = Marked.parse(response.payload.message);
+    mu.io?.to(id).send(response.payload);
   }
 }
 

@@ -2,6 +2,10 @@ import { sha512 } from "js-sha512";
 import db from "../api/database";
 import flags from "../api/flags";
 import cmds from "../api/cmds";
+import shortid from "shortid";
+import config from "../config/config.json";
+import mu from "../api/mu";
+
 export default () => {
   cmds.add({
     name: "Test",
@@ -28,16 +32,21 @@ export default () => {
       if (cursor.length <= 0) {
         const player = await db.create({
           name: char,
+          desc: "You see nothing special.",
           password: sha512(password),
+          id: shortid.generate(),
           flags: ["connected"],
           type: "player",
-          location: "Limbo",
+          location: (
+            await db.get({ name: config.game.startingRoom || "Limbo" })
+          ).id,
           contents: [],
           attribites: []
         });
-
         if (!player) return "Error Condition";
-        return "Welcome to the game!";
+        mu.connMap.set(id, player);
+        cmds.force(id, "look");
+        return "";
       } else {
         return "That name is either unavailable or in use.";
       }
@@ -58,8 +67,13 @@ export default () => {
 
       if (cursor[0].password) {
         if (cursor.length > 0 && sha512(args[2]).match(cursor[0].password)) {
-          console.log(await flags.setFlag(cursor[0], "connected"));
-          return "Welcome to the game!";
+          await flags.setFlag(cursor[0], "connected");
+          cursor[0].location = cursor[0].location || config.game.startingRoom;
+          await db.update({ _id: cursor[0]._id }, cursor[0]);
+          mu.connMap.set(id, cursor[0]);
+          cmds.force(id, "look");
+
+          return "";
         }
       } else {
         return "That's not a valid account.";
