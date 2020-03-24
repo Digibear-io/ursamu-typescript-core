@@ -2,7 +2,6 @@ import { MiddlewareNext, MuRequest } from "../api/parser";
 import cmds from "../api/cmds";
 import flags from "../api/flags";
 import mu from "../api/mu";
-import { DBObj } from "../api/database";
 
 export default async (req: MuRequest, next: MiddlewareNext) => {
   const id = req.socket.id;
@@ -10,14 +9,16 @@ export default async (req: MuRequest, next: MiddlewareNext) => {
   let matched = cmds.match(message);
   let flgs: Boolean;
 
-  if (matched && mu.connMap.has(id)) {
-    const char = mu.connMap.get(id);
-    flgs = flags.hasFlags(char!, matched.flags);
-  } else {
-    flgs = false;
-  }
+  const _hasFlags = () => {
+    if (matched && mu.connMap.has(id)) {
+      const char = mu.connMap.get(id);
+      return flags.hasFlags(char!, matched.flags);
+    } else {
+      return false;
+    }
+  };
 
-  if (matched && (!matched.flags || flgs)) {
+  if (matched && (!matched.flags || _hasFlags())) {
     // Matching command found!
     // run the command and await results
     const results = await matched

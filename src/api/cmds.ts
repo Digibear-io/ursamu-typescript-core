@@ -137,7 +137,7 @@ export class Commands {
             flags: cmd.flags
           };
         } else {
-          return false;
+          return;
         }
       })
       .filter(Boolean)[0];
