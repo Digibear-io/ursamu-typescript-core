@@ -9,7 +9,8 @@ export interface Flag {
 
 class Flags {
   private flags: Flag[];
-  constructor() {
+  private static instance: Flags;
+  private constructor() {
     this.flags = game.flags;
   }
 
@@ -91,10 +92,20 @@ class Flags {
       .reduce((prev: number, curr: number) => (prev > curr ? prev : curr), 0);
   }
 
+  /**
+   * Check to see if the enactor has the permission level to modify
+   * the target
+   * @param en The enacting DBObj
+   * @param tar The targeted DBObj
+   */
   canEdit(en: DBObj, tar: DBObj) {
     return this._bitLvl(en) >= this._bitLvl(tar) ? true : false;
   }
+
+  static getInstance() {
+    if (!Flags.instance) Flags.instance = new Flags();
+    return Flags.instance;
+  }
 }
 
-const flags = new Flags();
-export default flags;
+export default Flags.getInstance();

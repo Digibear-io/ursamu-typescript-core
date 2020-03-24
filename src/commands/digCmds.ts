@@ -1,1 +1,1 @@
-import cmds from "../api/cmds";
+import cmds from "../api/commands";

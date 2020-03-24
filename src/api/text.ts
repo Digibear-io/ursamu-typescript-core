@@ -1,4 +1,4 @@
-import { readFile, readdirSync, readFileSync } from "fs";
+import { readdirSync, readFileSync } from "fs";
 import { resolve } from "path";
 
 export interface FileInfo {
@@ -8,11 +8,17 @@ export interface FileInfo {
 }
 
 class TextFiles {
+  private static instance: TextFiles;
   private _index: FileInfo[];
-  constructor() {
+  private constructor() {
     this._index = [];
   }
 
+  /**
+   * Load text files from a directory.
+   * @param path The path to where the files are found.
+   * @param category The base category for the files to load
+   */
   load(path: string, category: string = "general") {
     const dir = readdirSync(resolve(__dirname, path), {
       encoding: "utf8",
@@ -33,6 +39,11 @@ class TextFiles {
     });
   }
 
+  /**
+   * Grab the contents of a stored text file.
+   * @param name The name of the file to grab (without the extension)
+   * @param category The file's category
+   */
   get(name: string, category = "general") {
     const results = this._index.find(
       file =>
@@ -46,7 +57,11 @@ class TextFiles {
       return "";
     }
   }
+
+  static getInstance() {
+    if (!TextFiles.instance) TextFiles.instance = new TextFiles();
+    return TextFiles.instance;
+  }
 }
 
-const text = new TextFiles();
-export default text;
+export default TextFiles.getInstance();

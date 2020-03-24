@@ -1,7 +1,7 @@
 import { types } from "util";
 import { loadDir } from "./utils";
-import mu from "./mu";
 import { Marked } from "@ts-stack/markdown";
+import mu from "./mu";
 
 type Exec = (id: string, args: string[]) => Promise<string>;
 
@@ -88,14 +88,15 @@ export class MuCommand {
 
 export class Commands {
   cmds: MuCommand[];
+  private static instance: Commands;
 
-  constructor() {
+  private constructor() {
     this.cmds = [];
     this.init();
   }
 
   /**
-   * Initiate the object.
+   * Instantiate the object.
    */
   init() {
     loadDir("../commands/", (name: string) =>
@@ -158,7 +159,11 @@ export class Commands {
       response.payload.message = Marked.parse(response.payload.message);
     mu.io?.to(id).send(response.payload);
   }
+
+  static getInstance() {
+    if (!Commands.instance) Commands.instance = new Commands();
+    return Commands.instance;
+  }
 }
 
-const cmds = new Commands();
-export default cmds;
+export default Commands.getInstance();

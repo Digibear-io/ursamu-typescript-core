@@ -1,7 +1,7 @@
 import { sha512 } from "js-sha512";
 import db from "../api/database";
 import flags from "../api/flags";
-import cmds from "../api/cmds";
+import cmds from "../api/commands";
 import shortid from "shortid";
 import config from "../config/config.json";
 import mu from "../api/mu";

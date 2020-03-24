@@ -2,11 +2,12 @@ import { EventEmitter } from "events";
 import { Server, Socket } from "socket.io";
 import parser, { MuResponse } from "./parser";
 import { Marked } from "@ts-stack/markdown";
-import commands from "../middleware/commands";
+import commands from "../middleware/commands.middleware";
 import text from "./text";
 import db, { DBObj } from "./database";
 import { game } from "../config/config.json";
 import shortid from "shortid";
+
 export type Plugin = () => void;
 
 export class MU extends EventEmitter {
@@ -98,5 +99,4 @@ export class MU extends EventEmitter {
   }
 }
 
-const mu = MU.getInstance();
-export default mu;
+export default MU.getInstance();

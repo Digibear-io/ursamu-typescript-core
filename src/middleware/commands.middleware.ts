@@ -1,5 +1,5 @@
 import { MiddlewareNext, MuRequest } from "../api/parser";
-import cmds from "../api/cmds";
+import cmds from "../api/commands";
 import flags from "../api/flags";
 import mu from "../api/mu";
 
@@ -7,7 +7,6 @@ export default async (req: MuRequest, next: MiddlewareNext) => {
   const id = req.socket.id;
   const message = req.payload.message || "";
   let matched = cmds.match(message);
-  let flgs: Boolean;
 
   const _hasFlags = () => {
     if (matched && mu.connMap.has(id)) {

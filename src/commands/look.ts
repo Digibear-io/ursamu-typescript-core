@@ -1,4 +1,4 @@
-import cmds from "../api/cmds";
+import cmds from "../api/commands";
 import db, { DBObj } from "../api/database";
 import mu from "../api/mu";
 import flags from "../api/flags";
