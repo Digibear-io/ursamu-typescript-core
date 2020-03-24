@@ -31,9 +31,15 @@ export interface MuResponse {
 
 export class Parser {
   private stack: MiddlewareLayer[];
+  private static instance: Parser;
 
-  constructor() {
+  private constructor() {
     this.stack = [];
+  }
+
+  static getInstance() {
+    if (!this.instance) this.instance = new Parser();
+    return this.instance;
   }
 
   async process(req: MuRequest): Promise<MuResponse> {
@@ -113,5 +119,4 @@ export class Parser {
   }
 }
 
-const parser = new Parser();
-export default parser;
+export default Parser.getInstance();

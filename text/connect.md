@@ -1,3 +1,5 @@
+![Alt Text!](images/ursamu_github_banner.png)
+
 **Welcome To UrsaMU!**
 
 This is an example server for the [UrsaMU](https://github.com/digibear-io/ursamu/) server. There should be a wiki up soon for the particulars of how the system works - but for now, visit our Github!

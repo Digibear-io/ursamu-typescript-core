@@ -11,13 +11,30 @@ export type Plugin = () => void;
 
 export class MU extends EventEmitter {
   io: Server | undefined;
+  private static instance: MU;
   connMap: Map<string, DBObj>;
-  constructor() {
+
+  private constructor() {
     super();
     this.io;
     this.connMap = new Map();
   }
 
+  /**
+   * Get an instance of the MU Class.
+   */
+  static getInstance() {
+    if (!this.instance) {
+      MU.instance = new MU();
+    }
+
+    return MU.instance;
+  }
+
+  /**
+   * Attach to a Socket.io  server implementation.
+   * @param io The Socket.io server to attach too.
+   */
   attach(io: Server) {
     this.io = io;
     return this;
@@ -81,5 +98,5 @@ export class MU extends EventEmitter {
   }
 }
 
-const mu = new MU();
+const mu = MU.getInstance();
 export default mu;
