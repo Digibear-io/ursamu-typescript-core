@@ -6,7 +6,7 @@ import flags from "../api/flags";
 export default () => {
   cmds.add({
     name: "Look",
-    pattern: /[look]+?\s?(.*)?/,
+    pattern: /(?:^l|^look)+?\s?(.*)?/,
     flags: "connected",
     exec: async (id: string, args: string[]) => {
       // Check to see if the enactor can see the target.

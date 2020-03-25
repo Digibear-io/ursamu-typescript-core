@@ -7,6 +7,7 @@ import text from "./text";
 import db, { DBObj } from "./database";
 import { game } from "../config/config.json";
 import shortid from "shortid";
+import flags from "./flags";
 
 export type Plugin = () => void;
 
@@ -95,6 +96,14 @@ export class MU extends EventEmitter {
         console.log("Room " + (game.startingRoom || "Limbo") + " - Created.");
     }
 
+    // Check to make sure everyone's `connected` flag is reset
+    // incase the MU didn't shut down clean.
+    const players = await db.find({ type: "player" });
+    for (const player of players) {
+      await flags.remFlag(player, "connected");
+    }
+
+    // If a callback function was given, run it now.
     if (typeof callback === "function") callback();
   }
 }

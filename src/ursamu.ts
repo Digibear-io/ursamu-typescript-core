@@ -13,7 +13,6 @@ const io = socketio(server);
 const mu = ursamu.attach(io);
 
 app.use(express.static("public"));
-app.use(cors());
 
 app.get("/", (req: Request, res: Response) =>
   res.sendFile(resolve(__dirname, "../public/index.html"))
