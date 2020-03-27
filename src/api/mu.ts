@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 import { Server, Socket } from "socket.io";
-import parser, { MuResponse } from "./parser";
+import parser, { MuRequest } from "./parser";
 import { Marked } from "@ts-stack/markdown";
 import commands from "../middleware/commands.middleware";
 import text from "./text";
@@ -8,6 +8,7 @@ import db, { DBObj } from "./database";
 import { game } from "../config/config.json";
 import shortid from "shortid";
 import flags from "./flags";
+import { verify } from "jsonwebtoken";
 
 export type Plugin = () => void;
 
@@ -50,28 +51,30 @@ export class MU extends EventEmitter {
   async start(callback?: () => void) {
     // Handle new client connections.
     this.io?.on("connection", async (socket: Socket) => {
-      const { id, payload }: MuResponse = await parser.process({
-        socket: socket,
-        payload: {
-          command: "connect"
+      // Whenever a socket sends a message, process it, and
+      // return the results.
+      socket.on(
+        "message",
+        async (message: {
+          command: string;
+          message: string;
+          data: { [key: string]: any };
+        }) => {
+          const res = await parser.process({
+            socket,
+            payload: {
+              command: message.command,
+              message: message.message,
+              data: message.data
+            }
+          });
+          // Make sure message is set, even if no return.
+          res.payload.message = res.payload.message
+            ? Marked.parse(res.payload.message)
+            : "";
+          this.io?.to(res.socket.id).send(res.payload);
         }
-      });
-      // Send the results back to the client.
-      this.io?.to(id).send(payload);
-
-      // When a new message comes from the MU, process
-      // it and return the results.
-      socket.on("message", async (message: string) => {
-        const { id, payload }: MuResponse = await parser.process({
-          socket,
-          payload: { command: "message", message }
-        });
-
-        // Send the results back to the client after converting
-        // any markdown.
-        if (payload.message) payload.message = Marked.parse(payload.message);
-        this.io?.to(id).send(payload);
-      });
+      );
     });
 
     parser.use(commands);

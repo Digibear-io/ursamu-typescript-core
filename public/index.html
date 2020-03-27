@@ -94,19 +94,41 @@
     input.addEventListener("keypress", ev => {
       if (ev.keyCode === 13 && !ev.shiftKey) {
         ev.preventDefault();
-        socket.send(input.innerText);
+        socket.send({
+          command: "message",
+          message: input.innerText,
+          data: {}
+        });
         input.innerText = "";
       }
     });
 
-    // When a new message comes in, add it to the feed.
+    // When the socket connects, let the server know we need
+    // the login screen.
+    socket.on("connect", () => {
+      socket.send({
+        command: "connect",
+        message: "",
+        data: {
+          token: window.sessionStorage.getItem("token")
+        }
+      });
+    });
 
+    // When a new message comes in, add it to the feed.
     socket.on("message", res => {
+      if (res.data.jwt) {
+        window.sessionStorage.setItem("token", res.data.jwt);
+      }
       const li = document.createElement("li");
       li.className = "item";
-      console.log(res);
       li.innerHTML = res.message;
       feed.appendChild(li);
     });
+
+    // On a window reload, clear the token.
+    window.onbeforeunload = e => {
+      window.sessionStorage.removeItem("token");
+    };
   </script>
 </html>

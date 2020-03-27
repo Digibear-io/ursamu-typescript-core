@@ -13,7 +13,7 @@ export const loadDir = async (
 ) => {
   const dir = readdirSync(resolve(__dirname, path), { withFileTypes: true });
   for (const dirent of dir) {
-    if ((dirent.isFile(), dirent.name.endsWith(".js"))) {
+    if ((dirent.isFile(), dirent.name.endsWith(".ts"))) {
       const module = await import(
         resolve(resolve(__dirname, path, dirent.name))
       ).catch((err: Error) => console.log(err));

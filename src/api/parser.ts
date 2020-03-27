@@ -1,11 +1,10 @@
 import { Socket } from "socket.io";
-import { Marked } from "@ts-stack/markdown";
-import text from "../api/text";
 import peg from "pegjs";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import { DBObj } from "./database";
 import { loadDir } from "./utils";
+import connectTask from "../tasks/connect.task";
 
 export type MiddlewareNext = (
   err: Error | null,
@@ -15,22 +14,16 @@ export type MiddlewareNext = (
 export type MiddlewareLayer = (
   data: MuRequest,
   next: MiddlewareNext
-) => Promise<MuResponse>;
+) => Promise<MuRequest>;
 
 export interface MuRequest {
   socket: Socket;
   payload: {
     command: string;
-    message?: string;
-    [key: string]: any;
-  };
-}
-export interface MuResponse {
-  id: string;
-  payload: {
-    command: string;
-    message?: string;
-    [key: string]: any;
+    message: string;
+    data: {
+      [key: string]: any;
+    };
   };
 }
 
@@ -94,7 +87,7 @@ export class Parser {
    * Process a request object frin tge ckuebt
    * @param req The request object.
    */
-  async process(req: MuRequest): Promise<MuResponse> {
+  async process(req: MuRequest): Promise<MuRequest> {
     const command = req.payload.command;
     const socket = req.socket;
     const message = req.payload.message;
@@ -104,21 +97,14 @@ export class Parser {
       case "message":
         return this._handle(req);
       case "connect":
-        return {
-          id: socket.id,
-          payload: {
-            command: "message",
-            message: text.get("connect")
-              ? Marked.parse(text.get("connect"))
-              : "File Not Found!"
-          }
-        };
+        return connectTask(req);
       default:
         return {
-          id: socket.id,
+          socket,
           payload: {
             command: "message",
-            message
+            message,
+            data
           }
         };
     }
@@ -136,7 +122,7 @@ export class Parser {
    * Run a string through a series of middleware.
    * @param data The string to be pushed through the pipeline.
    */
-  private async _handle(req: MuRequest): Promise<MuResponse> {
+  private async _handle(req: MuRequest): Promise<MuRequest> {
     let idx = 0;
 
     /**
@@ -149,15 +135,19 @@ export class Parser {
     const next = async (
       err: Error | null,
       req: MuRequest
-    ): Promise<MuResponse> => {
+    ): Promise<MuRequest> => {
       // Return early if there's an error, or if we've processed through
       // the entire stack.
       if (err != null) return Promise.reject(err);
       if (idx === this.stack.length) {
-        return {
-          id: req.socket.id,
-          payload: req.payload
-        };
+        return Promise.resolve({
+          socket: req.socket,
+          payload: {
+            command: req.payload.command,
+            message: req.payload.message,
+            data: req.payload.data
+          }
+        });
       }
 
       // Grab a new layer from the stack

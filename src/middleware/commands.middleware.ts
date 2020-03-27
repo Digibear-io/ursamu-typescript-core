@@ -20,15 +20,16 @@ export default async (req: MuRequest, next: MiddlewareNext) => {
   if (matched && (!matched.flags || _hasFlags())) {
     // Matching command found!
     // run the command and await results
-    const results = await matched
-      .exec(id, matched.args)
+    const res: MuRequest = await matched
+      .exec(req, matched.args)
       .catch((err: Error) => next(err, req));
 
-    req.payload.matched = matched ? true : false;
-    req.payload.message = results;
+    req.payload.data.matched = matched ? true : false;
+    req.payload.message = res.payload.message;
+    req.payload.data = res.payload.data;
     return next(null, req);
   } else if (!mu.connMap.has(id)) {
-    req.payload.matched = matched ? true : false;
+    req.payload.data.matched = matched ? true : false;
     req.payload.message = "";
     return next(null, req);
   }

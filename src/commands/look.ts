@@ -2,13 +2,15 @@ import cmds from "../api/commands";
 import db, { DBObj } from "../api/database";
 import mu from "../api/mu";
 import flags from "../api/flags";
+import { MuRequest } from "../api/parser";
+import { Marked } from "@ts-stack/markdown";
 
 export default () => {
   cmds.add({
     name: "Look",
     pattern: /(?:^l|^look)+?\s?(.*)?/,
     flags: "connected",
-    exec: async (id: string, args: string[]) => {
+    exec: async (req: MuRequest, args: string[]) => {
       // Check to see if the enactor can see the target.
       const canSee = (en: DBObj, tar: DBObj) => {
         if (flags.hasFlags(tar, "dark")) {
@@ -34,7 +36,7 @@ export default () => {
       };
 
       // Get the enactor
-      const en = mu.connMap.get(id);
+      const en = mu.connMap.get(req.socket.id);
       let tar;
       // Find the first DBO with the name or ID or target.
       if (args[2] === "here") {
@@ -53,9 +55,23 @@ export default () => {
       }
 
       if (canSee(en!, tar)) {
-        return `**${tar.name}**\n\n${tar.desc}`;
+        return {
+          socket: req.socket,
+          payload: {
+            command: "message",
+            message: `**${tar.name}**\n\n${tar.desc}`,
+            data: req.payload.data
+          }
+        };
       } else {
-        return "I can't find that here.";
+        return {
+          socket: req.socket,
+          payload: {
+            command: req.payload.command,
+            message: "I don't see that here.",
+            data: req.payload.data
+          }
+        };
       }
     }
   });

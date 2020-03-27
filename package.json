@@ -13,12 +13,15 @@
     "watch": [
       "src"
     ],
-    "exec": "npm start",
-    "ext": "ts"
+    "exec": "node --require ts-node/register src/ursamu.ts",
+    "ext": "ts",
+    "env": {
+      "TS_NODE_PROJECT": "tsconfig.json"
+    }
   },
   "scripts": {
-    "prestart": "npx tsc -p ./src/tsconfig.json",
-    "start": "node ./dist/ursamu.js"
+    "start": "node --require ts-node/register src/ursamu.ts",
+    "dev": "nodemon"
   },
   "keywords": [],
   "author": "Lemuel Lee Canady, Jr",
@@ -29,6 +32,7 @@
     "@types/express": "^4.17.3",
     "@types/helmet": "0.0.45",
     "@types/js-sha512": "^0.7.0",
+    "@types/jsonwebtoken": "^8.3.8",
     "@types/nedb": "^1.8.9",
     "@types/node": "^13.9.0",
     "@types/pegjs": "^0.10.1",
@@ -44,6 +48,7 @@
     "express": "^4.17.1",
     "helmet": "^3.21.3",
     "js-sha512": "^0.8.0",
+    "jsonwebtoken": "^8.5.1",
     "nedb": "^1.8.0",
     "pegjs": "^0.10.0",
     "shortid": "^2.2.15",

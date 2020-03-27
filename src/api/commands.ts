@@ -2,8 +2,9 @@ import { types } from "util";
 import { loadDir } from "./utils";
 import { Marked } from "@ts-stack/markdown";
 import mu from "./mu";
+import { MuRequest } from "./parser";
 
-type Exec = (id: string, args: string[]) => Promise<string>;
+type Exec = (req: MuRequest, args: string[]) => Promise<MuRequest>;
 
 export class MuCommand {
   private _pattern: RegExp | string;
@@ -51,9 +52,10 @@ export class MuCommand {
   private _globStringToRegex(str: string) {
     return new RegExp(
       this._preg_quote(str)
-        .replace(/\\\*/g, ".*")
-        .replace(/\\\?/g, "."),
-      "gi"
+        .replace(/\\\*/g, "(.*)")
+        .replace(/\\\?/g, "(.)")
+        .replace(" ", "\\s"),
+      "i"
     );
   }
 
@@ -144,20 +146,14 @@ export class Commands {
       .filter(Boolean)[0];
   }
 
-  async force(id: string, name: string, args: string[] = []) {
-    const response = {
-      id,
-      payload: {
-        command: name,
-        message: await this.cmds
-          .filter(cmd => cmd.name.toLowerCase() === name.toLowerCase())[0]
-          .exec(id, args)
-      }
-    };
+  async force(req: MuRequest, name: string, args: string[] = []) {
+    const results = await this.cmds
+      .filter(cmd => cmd.name.toLowerCase() === name.toLowerCase())[0]
+      .exec(req, args);
 
-    if (response.payload.message)
-      response.payload.message = Marked.parse(response.payload.message);
-    mu.io?.to(id).send(response.payload);
+    if (results.payload.message)
+      results.payload.message = Marked.parse(results.payload.message);
+    mu.io?.to(req.socket.id).send(results.payload);
   }
 
   static getInstance() {
