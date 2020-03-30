@@ -140,10 +140,13 @@ class Flags {
    * @param tar The Target DBObj to compare.
    */
   private _bitLvl(tar: DBObj) {
-    return this.flags
-      .filter(flag => tar.flags.indexOf(flag.name))
-      .map(flag => flag.lvl)
-      .reduce((prev: number, curr: number) => (prev > curr ? prev : curr), 0);
+    return (
+      tar.flags
+        .map(flag => this.flags.find(flg => flg.name === flag)?.lvl)
+        ?.reduce((pre = 0, curr = 0) => {
+          return pre < curr ? curr : pre;
+        }, 0) || 0
+    );
   }
 
   /**
@@ -153,6 +156,7 @@ class Flags {
    * @param tar The targeted DBObj
    */
   canEdit(en: DBObj, tar: DBObj) {
+    console.log(this._bitLvl(en));
     return this._bitLvl(en) >= this._bitLvl(tar) ? true : false;
   }
 

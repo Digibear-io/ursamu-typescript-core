@@ -7,7 +7,7 @@ import { MuRequest } from "../api/parser";
 export default () => {
   cmds.add({
     name: "Look",
-    pattern: /^l\s?(.*)|^l[ook]+?\s?(.*)/i,
+    pattern: /(?:^l|^l[ook]+?)(?:\s+?(.*))?/i,
     flags: "connected",
     exec: async (req: MuRequest, args: string[]) => {
       // Check to see if the enactor can see the target.
@@ -34,6 +34,7 @@ export default () => {
         }
       };
 
+      console.log(args);
       // Get the enactor
       const en = mu.connMap.get(req.socket.id) as DBObj;
       let tar;
@@ -47,10 +48,23 @@ export default () => {
       } else {
         tar = await db.get({
           $where: function() {
-            this.name.toLowerCase() === args[1]?.toLowerCase() ||
-              this.id === args[1];
+            return this.name.toLowerCase() === args[1]?.toLowerCase() ||
+              this.id === args[1]
+              ? true
+              : false;
           }
         });
+
+        if (!tar) {
+          return {
+            socket: req.socket,
+            payload: {
+              command: req.payload.command,
+              message: "I don't see that here.",
+              data: req.payload.data
+            }
+          };
+        }
       }
 
       if (canSee(en!, tar)) {
