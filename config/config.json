@@ -1,0 +1,37 @@
+{
+  "game": {
+    "port": 8090,
+    "startingRoom": "Limbo",
+    "flags": [
+      {
+        "name": "immortal",
+        "code": "i",
+        "lvl": 10,
+        "lock": "immortal"
+      },
+      {
+        "name": "wizard",
+        "code": "W",
+        "lvl": 9,
+        "lock": "immortal"
+      },
+      {
+        "name": "admin",
+        "code": "W",
+        "lvl": 8,
+        "lock": "immortal"
+      },
+      {
+        "name": "admin",
+        "code": "W",
+        "lvl": 8,
+        "lock": "wizard+"
+      },
+      {
+        "name": "connected",
+        "code": "c",
+        "lvl": 0
+      }
+    ]
+  }
+}

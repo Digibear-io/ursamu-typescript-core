@@ -1,14 +1,13 @@
 import { EventEmitter } from "events";
 import { Server, Socket } from "socket.io";
 import parser, { MuRequest } from "./parser";
-import { Marked } from "@ts-stack/markdown";
 import commands from "../middleware/commands.middleware";
 import text from "./text";
 import db, { DBObj } from "./database";
-import { game } from "../config/config.json";
+import config from "./config";
 import shortid from "shortid";
 import flags from "./flags";
-import { verify } from "jsonwebtoken";
+import md from "./md";
 
 export type Plugin = () => void;
 
@@ -70,7 +69,7 @@ export class MU extends EventEmitter {
           });
           // Make sure message is set, even if no return.
           res.payload.message = res.payload.message
-            ? Marked.parse(res.payload.message)
+            ? md.render(res.payload.message)
             : "";
           this.io?.to(res.socket.id).send(res.payload);
         }
@@ -86,7 +85,7 @@ export class MU extends EventEmitter {
     if (limbo.length <= 0) {
       const id = shortid.generate();
       const created = db.create({
-        name: game.startingRoom || "Limbo",
+        name: config.game.startingRoom || "Limbo",
         type: "room",
         desc: "You see nothing special.",
         id,
@@ -96,7 +95,9 @@ export class MU extends EventEmitter {
         location: id
       });
       if (created)
-        console.log("Room " + (game.startingRoom || "Limbo") + " - Created.");
+        console.log(
+          "Room " + (config.game.startingRoom || "Limbo") + " - Created."
+        );
     }
 
     // Check to make sure everyone's `connected` flag is reset

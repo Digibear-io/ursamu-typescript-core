@@ -129,4 +129,26 @@ export class NeDB<T> implements DbAdapter {
 
 const db = new NeDB<DBObj>(resolve(__dirname, "../../data/ursa.db"));
 db.init();
+
+/**
+ * Find a DBObj from a string name, here, or me.
+ * @param en The enactor DBObj
+ * @param tar the target string to search for
+ */
+export function target(en: DBObj, tar: string) {
+  tar = tar.toLowerCase();
+  if (tar === "me") {
+    return Promise.resolve(en);
+  } else if (tar === "here") {
+    return db.get({ id: en.location });
+  } else {
+    return db.get({
+      $where: function() {
+        if (this.name.toLowerCase() === tar) return true;
+        return false;
+      }
+    });
+  }
+}
+
 export default db;

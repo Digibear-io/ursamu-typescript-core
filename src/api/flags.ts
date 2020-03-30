@@ -1,17 +1,18 @@
-import { game } from "../config/config.json";
+import config from "./config";
 import db, { DBObj } from "./database";
 
 export interface Flag {
   name: string;
   code: string;
   lvl: number;
+  lock?: string;
 }
 
 class Flags {
   private flags: Flag[];
   private static instance: Flags;
   private constructor() {
-    this.flags = game.flags;
+    this.flags = config.game.flags;
   }
 
   /**
@@ -23,11 +24,14 @@ class Flags {
   }
 
   /**
-   * Check to see if a flag exists.
+   * Check to see if a flag exists.  Returns the flag object,
+   * or undefined.
    * @param flg The name of the flag to check
    */
   isFlag(flg: string) {
-    return this.flags.map(flag => flag.name).indexOf(flg) ? true : false;
+    return this.flags.find(flag =>
+      flag.name.match(new RegExp(flg.replace(/[!\+]/, ""), "i"))
+    );
   }
 
   /**
@@ -36,12 +40,28 @@ class Flags {
    * @param flgs The list of flags to check against.
    */
   hasFlags(tar: DBObj, flgs: string) {
-    return flgs
-      .split(" ")
-      .map(flag => (tar.flags.indexOf(flag) ? true : false))
-      .indexOf(false)
-      ? false
-      : true;
+    const res: Boolean[] = [];
+    for (const flg of flgs.split(" ")) {
+      const flag = this.isFlag(flg);
+      if (flag) {
+        // If target DOESN'T have a flag
+        if (flg.startsWith("!")) {
+          res.push(tar.flags.indexOf(flag.name) === -1 ? true : false);
+        } else if (flg.endsWith("+")) {
+          // If the target has bitlevel of this flag or greater.
+          res.push(this._bitLvl(tar) >= flag.lvl ? true : false);
+        } else {
+          // else check for the existance of a flag within the target
+          // flag list.
+          res.push(tar.flags.indexOf(flag.name) >= 0 ? true : false);
+        }
+      } else {
+        res.push(false);
+      }
+    }
+
+    // Are there any false results?
+    return res.indexOf(false) >= 0 ? false : true;
   }
 
   /**
@@ -51,23 +71,53 @@ class Flags {
    */
   async setFlag(tar: DBObj, flg: string) {
     const flagSet = new Set(tar.flags);
-    if (this.isFlag(flg)) {
-      flagSet.add(flg);
-      tar.flags = Array.from(flagSet);
-      return await db.update({ _id: tar._id }, tar);
+
+    // See if we're adding or removing a flag.
+    if (flg.startsWith("!")) {
+      // Get the full flag name.
+      const flag = this.isFlag(flg);
+      if (flag) {
+        await this.remFlag(tar, flag.name);
+        return `Flag (**${flag.name}**) removed.`;
+      } else {
+        return "Permission denied.";
+      }
+      // Update the targets flags!
+    } else {
+      const flag = this.isFlag(flg);
+      if (flag) {
+        flagSet.add(flg);
+        tar.flags = Array.from(flagSet);
+        await db.update({ _id: tar._id }, tar);
+
+        return `Flag (**${flag.name}**) set.`;
+      } else {
+        return "Permission deined.";
+      }
     }
-    return false;
   }
 
   /**
-   * Get the full name of a flag from a fragment.
-   * Returns the first result.
-   * @param flg The flag to get the name of
+   * Check to see if the enactor is able to set a given
+   * flag on the target.
+   * @param en The enactor
+   * @param tar The target
+   * @param flg The flag to test if enactor can set.
    */
-  flagName(flg: string) {
-    return this.flags
-      .filter(flag => flag.name.match(new RegExp(flg, "i")))
-      .map(flag => flag.name)[0];
+  canSet(en: DBObj, tar: DBObj, flg: string) {
+    // Replace it with the full flag name.
+    const flag = this.isFlag(flg);
+    if (flag) {
+      if (this.canEdit(en, tar)) {
+        if ((flag.lock && this.hasFlags(en, flag.lock)) || !flag.lock)
+          return true;
+        return false;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
   }
 
   /**
@@ -76,7 +126,11 @@ class Flags {
    * @param flag The flag to remove.
    */
   async remFlag(tar: DBObj, flag: string) {
-    tar.flags = tar.flags.filter(flag => flag !== this.flagName(flag));
+    tar.flags = tar.flags.filter(flg => {
+      const flagName = this.isFlag(flg);
+      if (flagName && flag !== flagName.name) return true;
+      return false;
+    });
     return await db.update({ _id: tar._id }, tar);
   }
 

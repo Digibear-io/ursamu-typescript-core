@@ -3,11 +3,10 @@ import db from "../api/database";
 import flags from "../api/flags";
 import cmds from "../api/commands";
 import shortid from "shortid";
-import config from "../config/config.json";
+import config from "../api/config";
 import mu from "../api/mu";
 import { MuRequest } from "../api/parser";
-import { sign, verify } from "jsonwebtoken";
-import { isObject } from "util";
+import { sign } from "jsonwebtoken";
 
 export default () => {
   cmds.add({
@@ -32,6 +31,8 @@ export default () => {
         }
       });
 
+      const players = await db.find({ type: "player" });
+
       // No matches, continue
       if (cursor.length <= 0) {
         const player = await db.create({
@@ -39,7 +40,7 @@ export default () => {
           desc: "You see nothing special.",
           password: sha512(password),
           id: shortid.generate(),
-          flags: ["connected"],
+          flags: players.length > 0 ? ["connected"] : ["immortal", "connected"],
           type: "player",
           location: (
             await db.get({ name: config.game.startingRoom || "Limbo" })
@@ -58,7 +59,9 @@ export default () => {
           };
         }
         mu.connMap.set(req.socket.id, player);
-        // cmds.force(req, "look");
+        req.socket.join(player.location);
+        cmds.force(req, "look");
+
         return {
           socket: req.socket,
           payload: {
@@ -108,37 +111,27 @@ export default () => {
           return {
             socket: req.socket,
             payload: {
-              command: "token",
+              command: "data",
               message: "",
               data: { ...req.payload.data, jwt }
             }
           };
         }
       } else {
-        req.socket.send({
-          command: req.payload.command,
-          message: "That's not a valid account!",
-          data: req.payload.data
-        });
         return {
           socket: req.socket,
           payload: {
             command: req.payload.command,
-            message: "",
+            message: "That's not a valid account!",
             data: req.payload.data
           }
         };
       }
-      req.socket.send({
-        command: req.payload.command,
-        message: "Incorrect Password.",
-        data: req.payload.data
-      });
       return {
         socket: req.socket,
         payload: {
           command: req.payload.command,
-          message: "",
+          message: "Incorrect Password",
           data: req.payload.data
         }
       };

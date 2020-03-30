@@ -1,8 +1,8 @@
 import { types } from "util";
 import { loadDir } from "./utils";
-import { Marked } from "@ts-stack/markdown";
 import mu from "./mu";
 import { MuRequest } from "./parser";
+import md from "./md";
 
 type Exec = (req: MuRequest, args: string[]) => Promise<MuRequest>;
 
@@ -152,7 +152,7 @@ export class Commands {
       .exec(req, args);
 
     if (results.payload.message)
-      results.payload.message = Marked.parse(results.payload.message);
+      results.payload.message = md.render(results.payload.message);
     mu.io?.to(req.socket.id).send(results.payload);
   }
 
