@@ -69,7 +69,11 @@ export class MU extends EventEmitter {
           });
           // Make sure message is set, even if no return.
           res.payload.message = res.payload.message
-            ? md.render(res.payload.message)
+            ? md.render(
+                res.payload.message
+                  .replace("\u250D", "(")
+                  .replace("\u2511", ")")
+              )
             : "";
           this.io?.to(res.socket.id).send(res.payload);
         }
@@ -92,7 +96,8 @@ export class MU extends EventEmitter {
         attribites: [],
         flags: [],
         contents: [],
-        location: id
+        location: id,
+        exits: []
       });
       if (created)
         console.log(
@@ -111,5 +116,27 @@ export class MU extends EventEmitter {
     if (typeof callback === "function") callback();
   }
 }
+
+export interface Payload {
+  command?: string;
+  message?: string;
+  data?: { [key: string]: any };
+}
+
+/**
+ * Helper function for creating new return data.
+ * @param req The request object given to the command
+ * @param payload The different payload fields available.
+ */
+export const payload = (req: MuRequest, payload?: Payload): MuRequest => {
+  return {
+    socket: req.socket,
+    payload: {
+      command: payload?.command || req.payload.command,
+      message: payload?.message || req.payload.message,
+      data: { ...req.payload.data, ...payload?.data }
+    }
+  };
+};
 
 export default MU.getInstance();

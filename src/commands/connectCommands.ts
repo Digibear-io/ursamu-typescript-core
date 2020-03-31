@@ -1,14 +1,27 @@
 import { sha512 } from "js-sha512";
-import db from "../api/database";
+import db, { target, DBObj } from "../api/database";
 import flags from "../api/flags";
 import cmds from "../api/commands";
 import shortid from "shortid";
 import config from "../api/config";
-import mu from "../api/mu";
+import mu, { payload } from "../api/mu";
 import { MuRequest } from "../api/parser";
 import { sign } from "jsonwebtoken";
 
 export default () => {
+  /**
+   * Update the tar location to add en.
+   * @param en The enactor DBObj
+   * @param tar The Target DBObj
+   */
+  const updateLoc = async (en: DBObj, tar: DBObj) => {
+    // Update the location conntents.
+    const contents = new Set(tar.contents);
+    contents.add(en.id);
+    tar.contents = Array.from(contents);
+    await db.update({ id: tar.id }, tar);
+  };
+
   cmds.add({
     name: "Test",
     pattern: /^[+@]?test$/g,
@@ -32,7 +45,9 @@ export default () => {
       });
 
       const players = await db.find({ type: "player" });
-
+      const location = await db.get({
+        name: config.game.startingRoom || "Limbo"
+      });
       // No matches, continue
       if (cursor.length <= 0) {
         const player = await db.create({
@@ -42,9 +57,7 @@ export default () => {
           id: shortid.generate(),
           flags: players.length > 0 ? ["connected"] : ["immortal", "connected"],
           type: "player",
-          location: (
-            await db.get({ name: config.game.startingRoom || "Limbo" })
-          ).id,
+          location: location.id,
           contents: [],
           attribites: []
         });
@@ -60,16 +73,12 @@ export default () => {
         }
         mu.connMap.set(req.socket.id, player);
         req.socket.join(player.location);
+
+        await updateLoc(player, location);
+        // Force the player to look at their location.
         cmds.force(req, "look");
 
-        return {
-          socket: req.socket,
-          payload: {
-            command: req.payload.command,
-            message: "",
-            data: req.payload.data
-          }
-        };
+        return payload(req, { message: "" });
       } else {
         return {
           socket: req.socket,
@@ -106,6 +115,9 @@ export default () => {
             "secret",
             { expiresIn: "1d" }
           );
+
+          const location = await target(cursor[0], config.game.startingRoom);
+          await updateLoc(cursor[0], location);
 
           cmds.force(req, "look");
           return {

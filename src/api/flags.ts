@@ -156,7 +156,6 @@ class Flags {
    * @param tar The targeted DBObj
    */
   canEdit(en: DBObj, tar: DBObj) {
-    console.log(this._bitLvl(en));
     return this._bitLvl(en) >= this._bitLvl(tar) ? true : false;
   }
 

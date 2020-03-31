@@ -240,6 +240,10 @@ export class Parser {
    */
   async run(en: DBObj, string: string, scope: Scope) {
     try {
+      string = string
+        .replace(/%[(]/g, "\u250D")
+        .replace(/%[)]/g, "\u2511")
+        .replace(/\[.*\]\(.*\)/g, "");
       return await this.evaluate(en, this.parse(string), scope);
     } catch (error) {
       return await this.string(en, string, scope);
