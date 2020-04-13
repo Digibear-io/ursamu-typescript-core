@@ -1,54 +1,127 @@
 import { MuRequest } from "../api/parser";
-import { verify } from "jsonwebtoken";
+import { verify, sign } from "jsonwebtoken";
 import db from "../api/database";
-import text from "../api/text";
-import mu from "../api/mu";
+import mu, { payload } from "../api/mu";
 import flags from "../api/flags";
+import { sha512 } from "js-sha512";
 
 /**
  * Handle a socket connecting to the server.
  */
 export default async (req: MuRequest): Promise<MuRequest> => {
-  // Defining an expression to handle showing the connection
-  // screen.  Gotta keep that code DRY!
-  const showConnect = (): MuRequest => {
-    return {
-      socket: req.socket,
-      payload: {
-        command: "connect",
-        message: text.get("connect"),
-        data: req.payload.data
-      }
-    };
-  };
+  const { user, password, token } = req.payload.data;
 
-  if (req.payload.data.token) {
+  // Depending on the data sent, either verify the JWT provided
+  // or authenticate user/pass and return a JWT to store on the
+  // client.
+  if (token) {
     // If the request already has a valid JWT attached to it
     // bypass the login screen.
-    try {
-      const auth = verify(req.payload.data.token, "secret") as {
-        [key: string]: any;
-      };
-      //
-      await db.get({ id: auth.id }).catch(err => {
-        mu.io?.to(req.socket.id).emit("authFailure", err);
-        return showConnect();
+    verify(token, "secret", {}, async (err: Error, decoded: any) => {
+      if (err)
+        return payload(req, {
+          message: "Error",
+          command: `Error: ${err.message}`,
+          data: { error: err },
+        });
+
+      // get the DBObj
+      const player = await db.get({ id: decoded.id }).catch((err: Error) => {
+        mu.io?.to(req.socket.id).send(
+          payload(req, {
+            message: `Error: ${err.message}`,
+            command: "error",
+            data: { error: err },
+          })
+        );
       });
-      mu.connMap.set(req.socket.id, await db.get({ id: auth.id }));
-      flags.setFlag(mu.connMap.get(req.socket.id)!, "connected");
-      return {
-        socket: req.socket,
-        payload: {
-          command: "message",
-          message: "",
-          data: {}
+
+      // if player exists, add them to the game.
+      if (player) {
+        mu.connMap.set(req.socket.id, player);
+        await flags.setFlag(player, "connected");
+        // Send a response back to the socket.
+        mu.io?.to(req.socket.id).send({
+          command: "reconnected",
+          message: "<p>Connected w/token!</p>",
+          data: { player, token },
+        });
+      } else {
+        // Unable to find the caracter.
+        return payload(req, {
+          message: "Unable to find that character.",
+          command: "error",
+        });
+      }
+    });
+  } else if (user && password && !token) {
+    // Find the player DBObj
+    const players = await db
+      .find({
+        $where: function () {
+          return this.name.toLowerCase() === user.toLowerCase() ? true : false;
+        },
+      })
+      .catch((err) => {
+        mu.io?.to(req.socket.id).send(
+          payload(req, {
+            message: "Authentication failure.",
+            command: "error",
+            data: { error: err },
+          })
+        );
+      });
+
+    if (players && players.length > 0) {
+      // verify the passwords match.  If a match, connect
+      // the socket to the game proper.
+      if (players[0].password?.match(sha512(password))) {
+        mu.connMap.set(req.socket.id, players[0]);
+        await flags.setFlag(players[0], "connected");
+        delete players[0].password;
+
+        // Sign the JWT and return it to the client along with the
+        // character info minus hashed password.
+        try {
+          const token = sign(
+            { id: players[0].id, flags: players[0].flags },
+            "secret",
+            { expiresIn: "1d" }
+          );
+          return payload(req, {
+            command: "connected",
+            message: "Connected!",
+            data: { player: players[0], token },
+          });
+        } catch (error) {
+          return payload(req, {
+            message: "Unable to sign token",
+            command: "error",
+          });
         }
-      };
-    } catch (err) {
-      mu.io?.to(req.socket.id).emit("authFailure", err);
-      return showConnect();
+      } else {
+        return payload(req, {
+          command: "error",
+          message: "Can't authenticate password.",
+        });
+      }
+    } else {
+      // Unable to find the caracter.
+      return payload(req, {
+        message: "Unable to find that character.",
+        command: "error",
+      });
     }
   } else {
-    return showConnect();
+    // Unknown request.
+    return payload(req, {
+      command: "error",
+      message: "Error. Username and password are required.",
+    });
   }
+
+  return payload(req, {
+    command: "derp",
+    message: "Passthrough, ignore me!",
+  });
 };

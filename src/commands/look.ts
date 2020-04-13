@@ -5,6 +5,7 @@ import flags from "../api/flags";
 import parser, { MuRequest } from "../api/parser";
 
 export interface LookData {
+  en: DBObj | undefined;
   tar: DBObj | undefined;
   things: DBObj[];
   players: DBObj[];
@@ -24,10 +25,11 @@ export default () => {
        */
 
       const look: LookData = {
+        en: undefined,
         tar: undefined,
         players: [],
         things: [],
-        exits: []
+        exits: [],
       };
 
       const canSee = (en: DBObj, tar: DBObj) => {
@@ -59,31 +61,26 @@ export default () => {
        * @param en Enactor DBObj
        * @param tar Target DBObj
        */
-      const buildDesc = async (en: DBObj, tar: DBObj) => {
-        let desc = `**${tar.name}**`;
-
-        // Extra data to be passed to the client
-
-        // List the name.  If the enactor can edit the target
-        // show the room ID next to the name, MUSH style.
-        desc += flags.canEdit(en, tar) ? `%(${tar.id}%)\n\n` : "\n\n";
-        desc += `${tar.desc}`;
-
+      const doLook = async (en: DBObj, tar: DBObj) => {
         // If the object has contents, list it! Else, skip.
         if (tar.contents.length > 0) {
-          desc +=
-            tar.type === "player"
-              ? "\n\n_Carrying:_\n\n"
-              : "\n\n_Contents:_\n\n";
-
           // Cycle through the contents and build a list
           for (const thing of tar.contents) {
             if (canSee(en, tar)) {
               const item = await db.get({ id: thing });
-              desc += item.name + "\n";
-              if (item.type === "player") {
+
+              // If it's a player that's not dark - or dark and enactor
+              // can 'edit' the target.
+              if (
+                item.type === "player" &&
+                (item.flags.indexOf("dark") === -1 || flags.canEdit(en, tar))
+              ) {
                 look.players?.push(item);
-              } else {
+              } else if (
+                // If
+                item.type === "thing" &&
+                (item.flags.indexOf("dark") === -1 || flags.canEdit(en, tar))
+              ) {
                 look.things?.push(item);
               }
             }
@@ -100,13 +97,7 @@ export default () => {
               look.exits.push(exit);
             }
           }
-
-          desc +=
-            "\n\n_Exits:_\n\n" +
-            exits.map(exit => `${exit.name.split(";")[0]}`).join(" ");
         }
-
-        return desc;
       };
 
       // Get the enactor
@@ -121,12 +112,12 @@ export default () => {
         tar = await db.get({ id: en?.location });
       } else {
         tar = await db.get({
-          $where: function() {
+          $where: function () {
             return this.name.toLowerCase() === args[1]?.toLowerCase() ||
               this.id === args[1]
               ? true
               : false;
-          }
+          },
         });
 
         if (!tar) {
@@ -135,18 +126,16 @@ export default () => {
             payload: {
               command: req.payload.command,
               message: "I don't see that here.",
-              data: req.payload.data
-            }
+              data: req.payload.data,
+            },
           };
         }
       }
 
       if (canSee(en!, tar)) {
         return payload(req, {
-          message: await parser.run(en, `${await buildDesc(en, tar)}`, {
-            "%#": en
-          }),
-          data: look
+          message: tar.desc,
+          data: look,
         });
       } else {
         return {
@@ -154,10 +143,10 @@ export default () => {
           payload: {
             command: req.payload.command,
             message: "I don't see that here.",
-            data: req.payload.data
-          }
+            data: req.payload.data,
+          },
         };
       }
-    }
+    },
   });
 };

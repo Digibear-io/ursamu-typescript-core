@@ -7,9 +7,14 @@ import db, { DBObj } from "./database";
 import config from "./config";
 import shortid from "shortid";
 import flags from "./flags";
-import md from "./md";
 
 export type Plugin = () => void;
+
+export type Message = {
+  command: string;
+  message: string;
+  data: { [key: string]: any };
+};
 
 export class MU extends EventEmitter {
   io: Server | undefined;
@@ -52,32 +57,18 @@ export class MU extends EventEmitter {
     this.io?.on("connection", async (socket: Socket) => {
       // Whenever a socket sends a message, process it, and
       // return the results.
-      socket.on(
-        "message",
-        async (message: {
-          command: string;
-          message: string;
-          data: { [key: string]: any };
-        }) => {
-          const res = await parser.process({
-            socket,
-            payload: {
-              command: message.command,
-              message: message.message,
-              data: message.data
-            }
-          });
-          // Make sure message is set, even if no return.
-          res.payload.message = res.payload.message
-            ? md.render(
-                res.payload.message
-                  .replace("\u250D", "(")
-                  .replace("\u2511", ")")
-              )
-            : "";
-          this.io?.to(res.socket.id).send(res.payload);
-        }
-      );
+      socket.on("message", async (message: string) => {
+        const payload: Message = JSON.parse(message);
+        const res = await parser.process({
+          socket,
+          payload,
+        });
+        // Make sure message is set, even if no return.
+        res.payload.message = res.payload.message
+          ? res.payload.message.replace("\u250D", "(").replace("\u2511", ")")
+          : "";
+        this.io?.to(res.socket.id).send(res.payload);
+      });
     });
 
     parser.use(commands);
@@ -93,11 +84,11 @@ export class MU extends EventEmitter {
         type: "room",
         desc: "You see nothing special.",
         id,
-        attribites: [],
+        attributes: [],
         flags: [],
         contents: [],
         location: id,
-        exits: []
+        exits: [],
       });
       if (created)
         console.log(
@@ -134,8 +125,8 @@ export const payload = (req: MuRequest, payload?: Payload): MuRequest => {
     payload: {
       command: payload?.command || req.payload.command,
       message: payload?.message || req.payload.message,
-      data: { ...req.payload.data, ...payload?.data }
-    }
+      data: { ...req.payload.data, ...payload?.data },
+    },
   };
 };
 

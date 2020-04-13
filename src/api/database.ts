@@ -6,10 +6,11 @@ export interface DBObj {
   id: string;
   desc: string;
   name: string;
+  image?: string;
   type: "thing" | "player" | "room" | "exit";
   alias?: string;
   password?: string;
-  attribites: Attribute[];
+  attributes: Attribute[];
   flags: string[];
   location: string;
   contents: string[];

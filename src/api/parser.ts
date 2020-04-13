@@ -66,10 +66,11 @@ export class Parser {
   private peg: any;
   private parser: peg.Parser;
   private fns: Map<string, MuFunction>;
+
   private constructor() {
     this.stack = [];
     this.peg = readFileSync(resolve(__dirname, "../../mushcode.pegjs"), {
-      encoding: "utf8"
+      encoding: "utf8",
     });
     this.parser = peg.generate(this.peg);
     this.fns = new Map();
@@ -104,8 +105,8 @@ export class Parser {
           payload: {
             command: "message",
             message,
-            data
-          }
+            data,
+          },
         };
     }
   }
@@ -145,8 +146,8 @@ export class Parser {
           payload: {
             command: req.payload.command,
             message: req.payload.message,
-            data: req.payload.data
-          }
+            data: req.payload.data,
+          },
         });
       }
 

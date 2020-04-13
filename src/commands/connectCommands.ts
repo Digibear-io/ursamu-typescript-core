@@ -59,7 +59,7 @@ export default () => {
           type: "player",
           location: location.id,
           contents: [],
-          attribites: []
+          attributes: []
         });
         if (!player) {
           return {

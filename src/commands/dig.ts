@@ -26,7 +26,7 @@ export default () => {
         type: "room",
         location: "",
         contents: [],
-        attribites: [],
+        attributes: [],
         exits: []
       });
 
@@ -45,7 +45,7 @@ export default () => {
             type: "exit",
             location: curRoom.id,
             contents: [],
-            attribites: [],
+            attributes: [],
             exits: []
           });
 
@@ -73,7 +73,7 @@ export default () => {
                 type: "exit",
                 location: newRoom.id,
                 contents: [],
-                attribites: [],
+                attributes: [],
                 exits: []
               });
 

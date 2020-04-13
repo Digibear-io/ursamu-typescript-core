@@ -14,7 +14,7 @@ The working list for basic server features. **UrsaMU** Is still under extreme de
 - [x] **Database**: Handle your data however you want! **UrsaMU** allows you to bring your favorite database to the table with it's **database adapter API**.
 - [x] **Commands**: Enter your own custom commands through the **command API**.
 - [x] **Flags** The game's flags are editable from either the **API** or through stored JSON flat files - or both!
-- [ ] **MushCode**: Evaluate mushcode expressions!
+- [x] **MushCode**: Evaluate mushcode expressions!
 - [ ] **Attributes** Store and evaluate and register commands and functions through MUSH-Like **attributes api**.
 - [x] **Grid** Build a grid in-game, load rooms or entire pre-built areas from flat JSON files or both!
 - [x] **Input Middleware**: The server allows for registering middleware to handle how in-game input.

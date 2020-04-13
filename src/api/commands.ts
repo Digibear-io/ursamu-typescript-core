@@ -152,7 +152,9 @@ export class Commands {
       .exec(req, args);
 
     if (results.payload.message)
-      results.payload.message = md.render(results.payload.message);
+      results.payload.message = md.render(
+        results.payload.message.replace("\u250D", "(").replace("\u2511", ")")
+      );
     mu.io?.to(req.socket.id).send(results.payload);
   }
 
