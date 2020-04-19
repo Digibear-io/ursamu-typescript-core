@@ -1,14 +1,19 @@
+import io, { Server as IOServer, Socket } from "socket.io";
+import {
+  Server as HTTPServer,
+  createServer,
+  ServerResponse,
+  IncomingMessage,
+} from "http";
 import { EventEmitter } from "events";
-import { Server, Socket } from "socket.io";
-import parser, { MuRequest } from "./parser";
-import commands from "../middleware/commands.middleware";
-import text from "./text";
-import db, { DBObj } from "./database";
-import config from "./config";
+import db, { DBObj } from "./api/database";
+import parser, { MuRequest, MiddlewareNext } from "./api/parser";
+import md from "./api/md";
+import cmds from "./api/commands";
 import shortid from "shortid";
-import flags from "./flags";
-
-export type Plugin = () => void;
+import config from "./api/config";
+import commands from "./middleware/commands.middleware";
+import flags from "./api/flags";
 
 export type Message = {
   command: string;
@@ -16,19 +21,26 @@ export type Message = {
   data: { [key: string]: any };
 };
 
+/**
+ * The main MU class.
+ * This class is responsible for gluing the different individual
+ * pieces of Ursamu into a workable facade.
+ */
 export class MU extends EventEmitter {
-  io: Server | undefined;
+  http: HTTPServer | undefined;
+  io: IOServer | undefined;
   private static instance: MU;
-  connMap: Map<string, DBObj>;
+  connections: Map<string, DBObj>;
 
   private constructor() {
     super();
     this.io;
-    this.connMap = new Map();
+    this.http;
+    this.connections = new Map();
   }
 
   /**
-   * Get an instance of the MU Class.
+   * Get a (new)instance of the MU Class.
    */
   static getInstance() {
     if (!this.instance) {
@@ -42,9 +54,46 @@ export class MU extends EventEmitter {
    * Attach to a Socket.io  server implementation.
    * @param io The Socket.io server to attach too.
    */
-  attach(io: Server) {
+  attach(io: IOServer) {
     this.io = io;
     return this;
+  }
+
+  /**
+   * Attach to an HTTP server instance.
+   * @param server The HTTP server instance to attach to.
+   */
+  server(server: HTTPServer) {
+    this.http = server;
+    this.io = io(server);
+    this.start();
+    return this;
+  }
+
+  /**
+   * Create an HTTP server from within the UrsaMU library.
+   * @param port The port the HTTP Server should listen on.
+   */
+  serve(port?: number) {
+    this.http = createServer(this.httpHandler).listen(
+      (port ? port : config.game.port) || 3000
+    );
+    this.io = io(this.http);
+    this.start();
+    console.log(
+      `UrsaMU started on port ${(port ? port : config.game.port) || 3000}`
+    );
+    return this;
+  }
+
+  /**
+   * Create a simple HTTP request handler.
+   * @param req Incoming message
+   * @param res Server response
+   */
+  httpHandler(req: IncomingMessage, res: ServerResponse) {
+    res.write("Welcome to Ursamu");
+    res.end();
   }
 
   /**
@@ -52,7 +101,7 @@ export class MU extends EventEmitter {
    * @param callback An optional function to execute when the
    * MU startup process ends
    */
-  async start(callback?: () => void) {
+  private async start() {
     // Handle new client connections.
     this.io?.on("connection", async (socket: Socket) => {
       // Whenever a socket sends a message, process it, and
@@ -63,16 +112,27 @@ export class MU extends EventEmitter {
           socket,
           payload,
         });
-        // Make sure message is set, even if no return.
-        res.payload.message = res.payload.message
-          ? res.payload.message.replace("\u250D", "(").replace("\u2511", ")")
-          : "";
-        this.io?.to(res.socket.id).send(res.payload);
+
+        // Render markdown
+        res.payload.message = md.render(
+          res.payload.message
+            ? res.payload.message.replace("\u250D", "(").replace("\u2511", ")")
+            : ""
+        );
+
+        if (this.connections.has(res.socket.id) && !res.payload.data.en) {
+          res.payload.data.en = this.connections.get(res.socket.id);
+        }
+
+        if (res.payload.data.room) {
+          this.io?.to(res.payload.data.room).send(res.payload);
+        } else {
+          this.io?.to(res.socket.id).send(res.payload);
+        }
       });
     });
 
     parser.use(commands);
-    text.load("../../text/");
 
     // Test for starting room.  If one doesn't exist, create it!
     const limbo = await db.find({ type: "room" });
@@ -102,9 +162,7 @@ export class MU extends EventEmitter {
     for (const player of players) {
       await flags.remFlag(player, "connected");
     }
-
-    // If a callback function was given, run it now.
-    if (typeof callback === "function") callback();
+    console.log("Startup Complete.");
   }
 }
 
@@ -129,5 +187,7 @@ export const payload = (req: MuRequest, payload?: Payload): MuRequest => {
     },
   };
 };
+
+export { parser, db, cmds, config, flags, MuRequest, DBObj, MiddlewareNext };
 
 export default MU.getInstance();

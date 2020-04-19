@@ -1,8 +1,4 @@
-import cmds from "../api/commands";
-import db, { DBObj } from "../api/database";
-import mu, { payload } from "../api/mu";
-import flags from "../api/flags";
-import parser, { MuRequest } from "../api/parser";
+import mu, { db,payload, cmds, DBObj, flags, MuRequest } from "../mu";
 
 export interface LookData {
   en: DBObj | undefined;
@@ -15,7 +11,7 @@ export interface LookData {
 export default () => {
   cmds.add({
     name: "Look",
-    pattern: /(?:^l|^l[ook]+?)(?:\s+?(.*))?/i,
+    pattern: /(?:^l|^look+?)(?:\s+?(.*))?/i,
     flags: "connected",
     exec: async (req: MuRequest, args: string[]) => {
       /**
@@ -101,7 +97,7 @@ export default () => {
       };
 
       // Get the enactor
-      const en = mu.connMap.get(req.socket.id) as DBObj;
+      const en = mu.connections.get(req.socket.id) as DBObj;
       let tar;
       // Find the first DBO with the name or ID or target.
       if (args[1] === "here") {
@@ -124,7 +120,7 @@ export default () => {
           return {
             socket: req.socket,
             payload: {
-              command: req.payload.command,
+              command: "command",
               message: "I don't see that here.",
               data: req.payload.data,
             },
@@ -134,14 +130,15 @@ export default () => {
 
       if (canSee(en!, tar)) {
         return payload(req, {
+          command: "desc",
           message: tar.desc,
-          data: look,
+          data: { en, tar, look },
         });
       } else {
         return {
           socket: req.socket,
           payload: {
-            command: req.payload.command,
+            command: "command",
             message: "I don't see that here.",
             data: req.payload.data,
           },

@@ -1,16 +1,13 @@
-import commands from "../api/commands";
-import { MuRequest } from "../api/parser";
-import mu, { payload } from "../api/mu";
-import db, { DBObj, target } from "../api/database";
+import mu, { db, payload, cmds, MuRequest, DBObj } from "../mu";
 import shortid from "shortid";
 
 export default () => {
-  commands.add({
+  cmds.add({
     name: "dig",
     flags: "admin+ connected",
     pattern: /@dig\s+?(.*)/i,
     exec: async (req: MuRequest, args: string[]) => {
-      const en = mu.connMap.get(req.socket.id) as DBObj;
+      const en = mu.connections.get(req.socket.id) as DBObj;
       const [name, exits] = args[1].split("=");
       let toName, fromName;
       if (exits) [toName, fromName] = exits.split(",");

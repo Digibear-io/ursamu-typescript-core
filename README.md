@@ -4,7 +4,7 @@
 
 ## What is UrsaMU
 
-**UrsaMU** is a **modern implementation** of the **MUSH** style internet talker, built on the shoulders of giants, and impimented with Typescript.
+**UrsaMU** is a **modern implementation** of the **MUSH** style internet talker, built on the shoulders of giants, and impimented with [Typescript](typescriptlang.org) and [Socket.io](socket.io).
 
 ## Planned Features
 
@@ -44,3 +44,11 @@ npm run start:watch
 ## License
 
 `MIT`
+
+# Starting a new server.
+
+UrsaMU can operate with a preexisting http server, or start one
+
+```JavaScript
+
+```

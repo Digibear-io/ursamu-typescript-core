@@ -1,5 +1,6 @@
 import DataStore from "nedb";
 import { resolve } from "path";
+import flags from "./flags";
 
 export interface DBObj {
   _id?: string;
@@ -7,6 +8,8 @@ export interface DBObj {
   desc: string;
   name: string;
   image?: string;
+  avatar?: string;
+  caption?: string;
   type: "thing" | "player" | "room" | "exit";
   alias?: string;
   password?: string;
@@ -46,7 +49,7 @@ export class NeDB<T> implements DbAdapter {
     if (this.path) {
       this.db = new DataStore<T>({
         filename: this.path,
-        autoload: true
+        autoload: true,
       });
     } else {
       this.db = new DataStore<T>();
@@ -126,30 +129,30 @@ export class NeDB<T> implements DbAdapter {
       })
     );
   }
+
+  /**
+   * Find a DBObj from a string name, here, or me.
+   * @param en The enactor DBObj
+   * @param tar the target string to search for
+   */
+  target(en: DBObj, tar: string) {
+    tar = tar.toLowerCase();
+    if (tar === "me") {
+      return Promise.resolve(en);
+    } else if (tar === "here") {
+      return db.get({ id: en.location });
+    } else {
+      return db.get({
+        $where: function () {
+          if (this.name.toLowerCase() === tar) return true;
+          return false;
+        },
+      });
+    }
+  }
 }
 
 const db = new NeDB<DBObj>(resolve(__dirname, "../../data/ursa.db"));
 db.init();
-
-/**
- * Find a DBObj from a string name, here, or me.
- * @param en The enactor DBObj
- * @param tar the target string to search for
- */
-export function target(en: DBObj, tar: string) {
-  tar = tar.toLowerCase();
-  if (tar === "me") {
-    return Promise.resolve(en);
-  } else if (tar === "here") {
-    return db.get({ id: en.location });
-  } else {
-    return db.get({
-      $where: function() {
-        if (this.name.toLowerCase() === tar) return true;
-        return false;
-      }
-    });
-  }
-}
 
 export default db;

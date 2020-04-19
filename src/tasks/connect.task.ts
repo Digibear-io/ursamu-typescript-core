@@ -1,8 +1,5 @@
-import { MuRequest } from "../api/parser";
 import { verify, sign } from "jsonwebtoken";
-import db from "../api/database";
-import mu, { payload } from "../api/mu";
-import flags from "../api/flags";
+import mu, { payload, MuRequest, flags, db } from "../mu";
 import { sha512 } from "js-sha512";
 
 /**
@@ -38,7 +35,7 @@ export default async (req: MuRequest): Promise<MuRequest> => {
 
       // if player exists, add them to the game.
       if (player) {
-        mu.connMap.set(req.socket.id, player);
+        mu.connections.set(req.socket.id, player);
         await flags.setFlag(player, "connected");
         // Send a response back to the socket.
         mu.io?.to(req.socket.id).send({
@@ -76,7 +73,7 @@ export default async (req: MuRequest): Promise<MuRequest> => {
       // verify the passwords match.  If a match, connect
       // the socket to the game proper.
       if (players[0].password?.match(sha512(password))) {
-        mu.connMap.set(req.socket.id, players[0]);
+        mu.connections.set(req.socket.id, players[0]);
         await flags.setFlag(players[0], "connected");
         delete players[0].password;
 

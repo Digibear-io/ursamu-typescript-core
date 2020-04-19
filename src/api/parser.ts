@@ -3,8 +3,9 @@ import peg from "pegjs";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import { DBObj } from "./database";
-import { loadDir } from "./utils";
+import { loadDir } from "../utils";
 import connectTask from "../tasks/connect.task";
+import { payload } from "../mu";
 
 export type MiddlewareNext = (
   err: Error | null,
@@ -22,6 +23,8 @@ export interface MuRequest {
     command: string;
     message: string;
     data: {
+      en?: DBObj;
+      tar?: DBObj;
       [key: string]: any;
     };
   };
@@ -74,7 +77,7 @@ export class Parser {
     });
     this.parser = peg.generate(this.peg);
     this.fns = new Map();
-    loadDir("../functions/", (name: string) =>
+    loadDir("./functions/", (name: string) =>
       console.log(`Module loaded: ${name}`)
     );
   }
@@ -100,14 +103,7 @@ export class Parser {
       case "connect":
         return connectTask(req);
       default:
-        return {
-          socket,
-          payload: {
-            command: "message",
-            message,
-            data,
-          },
-        };
+        return payload(req, {command: "message"});
     }
   }
 

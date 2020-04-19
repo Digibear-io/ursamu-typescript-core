@@ -1,29 +1,34 @@
-import commands from "../api/commands";
-import { MuRequest } from "../api/parser";
-import db, { target, DBObj } from "../api/database";
-import mu, { payload } from "../api/mu";
-import flags from "../api/flags";
+import mu, { db, payload, DBObj, MuRequest, cmds, flags } from "../mu";
 
 export default () => {
-  commands.add({
+  cmds.add({
     name: "desc",
     flags: "connected",
     pattern: /@des[cription]+?\s+?(.*)\s?=\s?(.*)/i,
     exec: async (req: MuRequest, args: string[]) => {
-      const en = mu.connMap.get(req.socket.id) as DBObj;
-      const tar = await target(en, args[1]);
+      const en = mu.connections.get(req.socket.id) as DBObj;
+      const tar = await db.target(en, args[1]);
 
       if (tar) {
         if (flags.canEdit(en, tar)) {
           tar.desc = args[2];
           await db.update({ id: tar.id }, tar);
-          return payload(req, { message: "Description set." });
+          return payload(req, {
+            command: "command",
+            message: "Description set.",
+          });
         } else {
-          return payload(req, { message: "Permission denied." });
+          return payload(req, {
+            command: "command",
+            message: "Permission denied.",
+          });
         }
       } else {
-        return payload(req, { message: "I can't find that" });
+        return payload(req, {
+          command: "command",
+          message: "I can't find that",
+        });
       }
-    }
+    },
   });
 };

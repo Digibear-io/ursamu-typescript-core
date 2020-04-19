@@ -1,7 +1,5 @@
-import { MiddlewareNext, MuRequest } from "../api/parser";
-import cmds from "../api/commands";
-import flags from "../api/flags";
-import mu from "../api/mu";
+
+import mu, {cmds, flags, MuRequest, MiddlewareNext } from "../mu";
 
 export default async (req: MuRequest, next: MiddlewareNext) => {
   const id = req.socket.id;
@@ -9,8 +7,8 @@ export default async (req: MuRequest, next: MiddlewareNext) => {
   let matched = cmds.match(message);
 
   const _hasFlags = () => {
-    if (matched && mu.connMap.has(id)) {
-      const char = mu.connMap.get(id);
+    if (matched && mu.connections.has(id)) {
+      const char = mu.connections.get(id);
       return flags.hasFlags(char!, matched.flags);
     } else {
       return false;
@@ -25,10 +23,11 @@ export default async (req: MuRequest, next: MiddlewareNext) => {
       .catch((err: Error) => next(err, req));
 
     req.payload.data.matched = matched ? true : false;
+    req.payload.command = res.payload.command;
     req.payload.message = res.payload.message;
     req.payload.data = res.payload.data;
     return next(null, req);
-  } else if (!mu.connMap.has(id)) {
+  } else if (!mu.connections.has(id)) {
     req.payload.data.matched = matched ? true : false;
     req.payload.message = "";
     return next(null, req);

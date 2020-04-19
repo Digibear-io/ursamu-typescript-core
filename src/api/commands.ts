@@ -1,6 +1,6 @@
 import { types } from "util";
-import { loadDir } from "./utils";
-import mu from "./mu";
+import { loadDir } from "../utils";
+import mu from "../mu";
 import { MuRequest } from "./parser";
 import md from "./md";
 
@@ -101,7 +101,7 @@ export class Commands {
    * Instantiate the object.
    */
   init() {
-    loadDir("../commands/", (name: string) =>
+    loadDir("./commands/", (name: string) =>
       console.log(`Module loaded: ${name}`)
     );
   }

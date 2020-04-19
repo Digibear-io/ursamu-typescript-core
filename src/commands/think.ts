@@ -1,6 +1,4 @@
-import cmds from "../api/commands";
-import mu from "../api/mu";
-import parser, { MuRequest } from "../api/parser";
+import mu , {cmds, parser, MuRequest} from "../mu";
 
 export default () => {
   cmds.add({
@@ -8,7 +6,7 @@ export default () => {
     flags: "connected",
     pattern: "think *",
     exec: async (req: MuRequest, args: string[]) => {
-      const en = mu.connMap.get(req.socket.id);
+      const en = mu.connections.get(req.socket.id);
       return {
         socket: req.socket,
         payload: {
