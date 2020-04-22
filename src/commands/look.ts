@@ -1,4 +1,4 @@
-import mu, { db,payload, cmds, DBObj, flags, MuRequest } from "../mu";
+import mu, { db, payload, cmds, DBObj, flags, MuRequest } from "../mu";
 
 export interface LookData {
   en: DBObj | undefined;
@@ -11,7 +11,7 @@ export interface LookData {
 export default () => {
   cmds.add({
     name: "Look",
-    pattern: /(?:^l|^look+?)(?:\s+?(.*))?/i,
+    pattern: /^look(?:\s+?(\w+))?/i,
     flags: "connected",
     exec: async (req: MuRequest, args: string[]) => {
       /**
@@ -28,6 +28,7 @@ export default () => {
         exits: [],
       };
 
+      // TODO:  Move this to grid.ts
       const canSee = (en: DBObj, tar: DBObj) => {
         if (flags.hasFlags(tar, "dark")) {
           if (
@@ -51,72 +52,16 @@ export default () => {
         }
       };
 
-      /**
-       * Build a description for `tar` based on what `en'
-       * can see.
-       * @param en Enactor DBObj
-       * @param tar Target DBObj
-       */
-      const doLook = async (en: DBObj, tar: DBObj) => {
-        // If the object has contents, list it! Else, skip.
-        if (tar.contents.length > 0) {
-          // Cycle through the contents and build a list
-          for (const thing of tar.contents) {
-            if (canSee(en, tar)) {
-              const item = await db.get({ id: thing });
-
-              // If it's a player that's not dark - or dark and enactor
-              // can 'edit' the target.
-              if (
-                item.type === "player" &&
-                (item.flags.indexOf("dark") === -1 || flags.canEdit(en, tar))
-              ) {
-                look.players?.push(item);
-              } else if (
-                // If
-                item.type === "thing" &&
-                (item.flags.indexOf("dark") === -1 || flags.canEdit(en, tar))
-              ) {
-                look.things?.push(item);
-              }
-            }
-          }
-        }
-
-        // If the target has exits
-        if (tar.exits) {
-          let exits: DBObj[] = [];
-          for (const ex of tar.exits) {
-            const exit = await db.get({ id: ex });
-            if (canSee(en, exit)) {
-              exits.push(exit);
-              look.exits.push(exit);
-            }
-          }
-        }
-      };
-
-      // Get the enactor
-      const en = mu.connections.get(req.socket.id) as DBObj;
-      let tar;
-      // Find the first DBO with the name or ID or target.
-      if (args[1] === "here") {
-        tar = await db.get({ id: en.location });
-      } else if (args[1] === "me") {
-        tar = en;
-      } else if (!args[1]) {
-        tar = await db.get({ id: en?.location });
-      } else {
-        tar = await db.get({
-          $where: function () {
-            return this.name.toLowerCase() === args[1]?.toLowerCase() ||
-              this.id === args[1]
-              ? true
-              : false;
-          },
-        });
-
-        if (!tar) {
+      const en = mu.connections.get(req.socket.id);
+      const tar = await db.target(en!, args[1]);
+      if (tar) {
+        if (canSee(en!, tar)) {
+          return payload(req, {
+            command: "desc",
+            message: tar.desc,
+            data: { en, tar, look },
+          });
+        } else {
           return {
             socket: req.socket,
             payload: {
@@ -126,23 +71,11 @@ export default () => {
             },
           };
         }
-      }
-
-      if (canSee(en!, tar)) {
-        return payload(req, {
-          command: "desc",
-          message: tar.desc,
-          data: { en, tar, look },
-        });
       } else {
-        return {
-          socket: req.socket,
-          payload: {
-            command: "command",
-            message: "I don't see that here.",
-            data: req.payload.data,
-          },
-        };
+        return payload(req, {
+          command: "command",
+          message: "I don't see that here.",
+        });
       }
     },
   });

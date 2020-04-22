@@ -24,7 +24,7 @@ export default () => {
         location: "",
         contents: [],
         attributes: [],
-        exits: []
+        exits: [],
       });
 
       // If the new room exists
@@ -40,10 +40,10 @@ export default () => {
             id: shortid.generate(),
             flags: [],
             type: "exit",
-            location: curRoom.id,
+            location: curRoom!.id,
             contents: [],
             attributes: [],
-            exits: []
+            exits: [],
           });
 
           // If the to - exit is created, link it to the
@@ -57,8 +57,10 @@ export default () => {
             );
 
             // Add the exit to the current room
-            curRoom.exits?.push(toExit.id);
-            await db.update({ id: curRoom.id }, curRoom);
+            if (curRoom) {
+              curRoom.exits?.push(toExit.id);
+              await db.update({ id: curRoom.id }, curRoom);
+            }
 
             // Check for a return exit.
             if (fromName) {
@@ -71,7 +73,7 @@ export default () => {
                 location: newRoom.id,
                 contents: [],
                 attributes: [],
-                exits: []
+                exits: [],
               });
 
               // If the exit was created, add it to the newRoom
@@ -82,7 +84,7 @@ export default () => {
                 output.push(
                   `Exit (**${fromName
                     .split(";")[0]
-                    .trim()}**) opened to **${curRoom.name.trim()}**`
+                    .trim()}**) opened to **${curRoom!.name.trim()}**`
                 );
               }
             }
@@ -91,6 +93,6 @@ export default () => {
       }
       // Send off the message!
       return payload(req, { message: output.join("\n") });
-    }
+    },
   });
 };

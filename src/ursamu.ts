@@ -1,6 +1,5 @@
 import express, { Request, Response } from "express";
 import { Server } from "http";
-import socketio from "socket.io";
 import config from "./api/config";
 import { resolve } from "path";
 import ursamu from "./mu";

@@ -76,7 +76,7 @@ export class NeDB<T> implements DbAdapter {
    * Get a single database document.
    * @param query The query object to search for.
    */
-  get(query: any): Promise<T> {
+  get(query: any): Promise<T| undefined> {
     return new Promise((resolve: any, reject: any) =>
       this.db?.findOne<T>(query, (err: Error, doc: any) => {
         if (err) reject(err);
@@ -124,7 +124,7 @@ export class NeDB<T> implements DbAdapter {
   delete(query: any): Promise<number> {
     return new Promise((resolve: any, reject: any) =>
       this.db?.remove(query, {}, (err: Error, n: number) => {
-        if (err) reject(resolve);
+        if (err) reject(err);
         return resolve(n);
       })
     );
@@ -136,18 +136,22 @@ export class NeDB<T> implements DbAdapter {
    * @param tar the target string to search for
    */
   target(en: DBObj, tar: string) {
-    tar = tar.toLowerCase();
-    if (tar === "me") {
-      return Promise.resolve(en);
-    } else if (tar === "here") {
-      return db.get({ id: en.location });
+    if (tar) {
+      tar = tar.toLowerCase();
+      if (tar === "me") {
+        return Promise.resolve(en);
+      } else if (tar === "here") {
+        return db.get({ id: en.location });
+      } else {
+        return db.get({
+          $where: function () {
+            if (this.name.toLowerCase() === tar) return true;
+            return false;
+          },
+        });
+      }
     } else {
-      return db.get({
-        $where: function () {
-          if (this.name.toLowerCase() === tar) return true;
-          return false;
-        },
-      });
+      return db.get({ id: en.location });
     }
   }
 }

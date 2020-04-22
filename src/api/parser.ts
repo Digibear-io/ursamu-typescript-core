@@ -6,6 +6,7 @@ import { DBObj } from "./database";
 import { loadDir } from "../utils";
 import connectTask from "../tasks/connect.task";
 import { payload } from "../mu";
+import createTask from "../tasks/create.task";
 
 export type MiddlewareNext = (
   err: Error | null,
@@ -32,7 +33,7 @@ export interface MuRequest {
 
 export type MuFunction = (
   enactor: DBObj,
-  args: Array<Expression | string | number>,
+  args: string[],
   scope: Scope
 ) => Promise<any>;
 
@@ -56,7 +57,7 @@ export interface Expression {
       column: number;
     };
   };
-  args: Array<string | Expression>;
+  args: Array<Expression>;
 }
 
 export interface Scope {
@@ -93,15 +94,14 @@ export class Parser {
    */
   async process(req: MuRequest): Promise<MuRequest> {
     const command = req.payload.command;
-    const socket = req.socket;
-    const message = req.payload.message;
-    const data = req.payload.data;
-
+   
     switch (command) {
       case "message":
         return this._handle(req);
       case "connect":
         return connectTask(req);
+      case "create":
+        return createTask(req);
       default:
         return payload(req, {command: "message"});
     }
@@ -210,7 +210,15 @@ export class Parser {
         const func = this.fns.get(operator.value);
         if (func) {
           // Execute it and return the results.
-          return await func(en, expr.args, scope);
+          
+          // Evaluate the args for recursive functions before
+          // envoking the function.
+          const args: string[] = [];
+          for (const arg of expr.args) {
+            args.push(await this.evaluate(en, arg, scope));
+          }
+
+          return await func(en, args, scope);
         }
       }
 

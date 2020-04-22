@@ -97,6 +97,21 @@ export class MU extends EventEmitter {
   }
 
   /**
+   * Get a SocketID from a DBOBj _id if it exists in the
+   * connection map.
+   * @param id The database ID for the target.
+   */
+  socketID(id: string) {
+    let socketID = "";
+
+    this.connections.forEach((v, k) => {
+      if (v._id === id) socketID = k;
+    });
+
+    return socketID;
+  }
+
+  /**
    * Start the game engine.
    * @param callback An optional function to execute when the
    * MU startup process ends
@@ -124,10 +139,33 @@ export class MU extends EventEmitter {
           res.payload.data.en = this.connections.get(res.socket.id);
         }
 
-        if (res.payload.data.room) {
-          this.io?.to(res.payload.data.room).send(res.payload);
+        // If the response has a target, send it to the target's ID.
+        // else, send it the response to the enactor's location by default
+        // for general chat like behavior.
+        if (res.payload.data.tar) {
+          // If it's a player, send it to their socket ID.
+          if (res.payload.data.tar.type === "player") {
+            this.io
+              ?.to(this.socketID(res.payload.data.tar._id!))
+              .send(res.payload);
+          } else if (res.payload.data.tar.type === "room") {
+            // Else if it's a room, just send to it's _id.
+            
+            this.io?.to(res.payload.data.tar.id!).send(res.payload)
+          }
         } else {
-          this.io?.to(res.socket.id).send(res.payload);
+          if (res.payload.data.en) {
+            this.io?.to(res.payload.data.en.location).send(res.payload);
+          }
+        }
+      });
+
+      socket.on("disconnect", async () => {
+        if (this.connections.has(socket.id)) {
+          const player = this.connections.get(socket.id);
+          if (player) {
+            await flags.setFlag(player, "!connected");
+          }
         }
       });
     });
@@ -156,12 +194,6 @@ export class MU extends EventEmitter {
         );
     }
 
-    // Check to make sure everyone's `connected` flag is reset
-    // incase the MU didn't shut down clean.
-    const players = await db.find({ type: "player" });
-    for (const player of players) {
-      await flags.remFlag(player, "connected");
-    }
     console.log("Startup Complete.");
   }
 }

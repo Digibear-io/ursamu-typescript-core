@@ -4,7 +4,7 @@ export default () => {
   cmds.add({
     name: "think",
     flags: "connected",
-    pattern: "think *",
+    pattern: /^think\s+?(.*)/,
     exec: async (req: MuRequest, args: string[]) => {
       const en = mu.connections.get(req.socket.id);
       return {
