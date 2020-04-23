@@ -1,6 +1,5 @@
 import DataStore from "nedb";
 import { resolve } from "path";
-import flags from "./flags";
 
 export interface DBObj {
   _id?: string;
@@ -42,6 +41,7 @@ export class NeDB<T> implements DbAdapter {
 
   constructor(path?: string) {
     this.path = path || "";
+    this.init();
   }
 
   /** create the database model  */
@@ -141,9 +141,9 @@ export class NeDB<T> implements DbAdapter {
       if (tar === "me") {
         return Promise.resolve(en);
       } else if (tar === "here") {
-        return db.get({ id: en.location });
+        return this.get({ id: en.location });
       } else {
-        return db.get({
+        return this.get({
           $where: function () {
             if (this.name.toLowerCase() === tar) return true;
             return false;
@@ -151,12 +151,11 @@ export class NeDB<T> implements DbAdapter {
         });
       }
     } else {
-      return db.get({ id: en.location });
+      return this.get({ id: en.location });
     }
   }
 }
 
-const db = new NeDB<DBObj>(resolve(__dirname, "../../data/ursa.db"));
-db.init();
+export default new NeDB<DBObj>(resolve(__dirname, "../../data/ursa.db"));
 
-export default db;
+
