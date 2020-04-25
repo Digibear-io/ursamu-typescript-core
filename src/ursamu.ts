@@ -1,6 +1,5 @@
 import express, { Request, Response } from "express";
 import { Server } from "http";
-import { resolve } from "path";
 import mu, { config } from "./mu";
 
 // Define the various communication channels.

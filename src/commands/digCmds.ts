@@ -1,7 +1,7 @@
-import mu, {MuRequest, cmds, payload} from "../mu";
+import mu, {MuRequest, payload} from "../mu";
 
 export default () => {
-  cmds.add({
+  mu.cmd({
     name: "dig",
     pattern: /@dig\s+?(.*)/i,
     flags: "admin connected",

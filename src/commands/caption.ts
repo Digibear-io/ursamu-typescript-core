@@ -1,7 +1,7 @@
-import mu, { cmds, MuRequest, payload, db, flags, DBObj } from "../mu";
+import mu, { MuRequest, payload, db, flags, DBObj } from "../mu";
 
 export default () =>
-  cmds.add({
+  mu.cmd({
     name: "caption",
     flags: "connected admin+",
     pattern: /@caption\s+?(.*)\s?=\s?(.*)/i,

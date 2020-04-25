@@ -1,4 +1,4 @@
-import mu, { db, payload, cmds, DBObj, flags, MuRequest } from "../mu";
+import mu, { db, payload, DBObj, flags, MuRequest } from "../mu";
 
 export interface LookData {
   en: DBObj | undefined;
@@ -9,7 +9,7 @@ export interface LookData {
 }
 
 export default () => {
-  cmds.add({
+  mu.cmd({
     name: "Look",
     pattern: /^look(?:\s+?(\w+))?/i,
     flags: "connected",

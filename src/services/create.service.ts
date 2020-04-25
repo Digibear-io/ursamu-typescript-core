@@ -1,7 +1,6 @@
 import mu, { MuRequest, db, payload, config } from "../mu";
 import shortid from "shortid";
 import { sha512 } from "js-sha512";
-import { sign } from "jsonwebtoken";
 
 export default async (req: MuRequest): Promise<MuRequest> => {
   const { user, password } = req.payload.data;
@@ -48,6 +47,7 @@ export default async (req: MuRequest): Promise<MuRequest> => {
       password: sha512(password),
     });
 
+    mu.connections.set(req.socket.id, char)
     req.socket.join(char.location);
     return payload(req, {
       command: "connected",

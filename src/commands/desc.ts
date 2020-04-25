@@ -1,7 +1,7 @@
-import mu, { db, payload, DBObj, MuRequest, cmds, flags } from "../mu";
+import mu, { db, payload, DBObj, MuRequest, flags } from "../mu";
 
 export default () => {
-  cmds.add({
+  mu.cmd({
     name: "desc",
     flags: "connected",
     pattern: /@des[cription]+?\s+?(.*)\s?=\s?(.*)/i,

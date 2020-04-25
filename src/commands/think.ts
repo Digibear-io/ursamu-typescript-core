@@ -1,7 +1,7 @@
-import mu , {cmds, parser, MuRequest} from "../mu";
+import mu , { MuRequest, parser} from "../mu";
 
 export default () => {
-  cmds.add({
+  mu.cmd({
     name: "think",
     flags: "connected",
     pattern: /^think\s+?(.*)/,

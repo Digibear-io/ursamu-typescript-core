@@ -1,7 +1,7 @@
-import mu, { payload, flags, db, MuRequest, cmds } from "../mu";
+import mu, { payload, flags, db, MuRequest } from "../mu";
 
 export default () => {
-  cmds.add({
+  mu.cmd({
     name: "image",
     flags: "connected",
     pattern: /@image(\/avatar)?\s+?(.*)\s?=\s?(.*)/,

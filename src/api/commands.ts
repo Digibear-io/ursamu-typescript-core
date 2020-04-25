@@ -5,7 +5,12 @@ import { MuRequest } from "./parser";
 import md from "./md";
 
 type Exec = (req: MuRequest, args: string[]) => Promise<MuRequest>;
-
+export type Cmd = {
+  name: string;
+    flags?: string;
+    pattern: RegExp | string;
+    exec: Exec;
+}
 export class MuCommand {
   private _pattern: RegExp | string;
   flags: string;

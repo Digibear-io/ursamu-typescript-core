@@ -7,13 +7,15 @@ import {
 } from "http";
 import { EventEmitter } from "events";
 import db, { DBObj } from "./api/database";
-import parser, { MuRequest, MiddlewareNext } from "./api/parser";
+import parser, { MuRequest, MiddlewareNext, MiddlewareLayer, MuFunction, Service } from "./api/parser";
 import md from "./api/md";
-import cmds from "./api/commands";
+import cmds, { Cmd } from "./api/commands";
 import shortid from "shortid";
 import config from "./api/config";
 import commands from "./middleware/commands.middleware";
 import flags from "./api/flags";
+import connect from './services/connect.service';
+import create from './services/create.service';
 
 export type Message = {
   command: string;
@@ -112,12 +114,54 @@ export class MU extends EventEmitter {
   }
 
   /**
+   * Load a module when the server starts.  A good place
+   * to load code that needs to run an independant setup,
+   * or instantiate multiple game functions at startup.
+   * @param plugin The file to load at startup.
+   */
+  configure(plugin: ()=>{}) {
+    plugin();
+  }
+
+  /**
+   * Load a middleware function to run against user
+   * input via the parser.
+   * @param middleware The middleware layer to add to the
+   * pipeline.
+   */
+  middleware(middleware: MiddlewareLayer) {
+    parser.use(middleware);
+  }
+
+  /**
+   * Add an in-game command to the system.
+   * @param cmd Facade for adding new commands to the
+   * mu server.
+   */
+  cmd(cmd: Cmd) {
+    cmds.add(cmd);
+  }
+
+  /**
+   * Add a mushcode function to the game.
+   * @param name Name of the function to add
+   * @param func The body of the mushcode function
+   */
+  fun(name:string, func: MuFunction) {
+    parser.add(name, func);
+  }
+
+  service(name: string, service: Service){
+    parser.service(name, service);
+  }
+
+  /**
    * Start the game engine.
    * @param callback An optional function to execute when the
    * MU startup process ends
    */
   private async start() {
-    // Handle new client connections.
+    // Handle client connections.
     this.io?.on("connection", async (socket: Socket) => {
       // Whenever a socket sends a message, process it, and
       // return the results.
@@ -135,6 +179,8 @@ export class MU extends EventEmitter {
             : ""
         );
 
+        // If the request doesn't have an enactor attached, try to get
+        // the character information from the socket if it exists.
         if (this.connections.has(res.socket.id) && !res.payload.data.en) {
           res.payload.data.en = this.connections.get(res.socket.id);
         }
@@ -149,7 +195,7 @@ export class MU extends EventEmitter {
               ?.to(this.socketID(res.payload.data.tar._id!))
               .send(res.payload);
           } else if (res.payload.data.tar.type === "room") {
-            // Else if it's a room, just send to it's _id.
+            // Else if it's a room, just send to it's id.
             
             this.io?.to(res.payload.data.tar.id!).send(res.payload)
           }
@@ -160,6 +206,8 @@ export class MU extends EventEmitter {
         }
       });
 
+      // When a socket disconnects rem ove the connected
+      // flag from the character object.
       socket.on("disconnect", async () => {
         if (this.connections.has(socket.id)) {
           const player = this.connections.get(socket.id);
@@ -170,7 +218,10 @@ export class MU extends EventEmitter {
       });
     });
 
-    parser.use(commands);
+    // Install some default services and middleware
+    this.service('connect', connect);
+    this.service('create', create);
+    this.middleware(commands);
 
     // Test for starting room.  If one doesn't exist, create it!
     const limbo = await db.find({ type: "room" });
@@ -195,6 +246,7 @@ export class MU extends EventEmitter {
     }
 
     console.log("Startup Complete.");
+    this.emit('started');
   }
 }
 
@@ -220,6 +272,6 @@ export const payload = (req: MuRequest, payload?: Payload): MuRequest => {
   };
 };
 
-export { parser, db, cmds, config, flags, MuRequest, DBObj, MiddlewareNext };
+export {  db, config, parser, cmds, flags, MuRequest, DBObj, MiddlewareNext };
 
 export default MU.getInstance();

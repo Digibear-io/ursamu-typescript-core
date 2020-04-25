@@ -1,8 +1,8 @@
-import mu, { db, payload, cmds, MuRequest, DBObj } from "../mu";
+import mu, { db, payload, MuRequest, DBObj } from "../mu";
 import shortid from "shortid";
 
 export default () => {
-  cmds.add({
+  mu.cmd({
     name: "dig",
     flags: "admin+ connected",
     pattern: /@dig\s+?(.*)/i,

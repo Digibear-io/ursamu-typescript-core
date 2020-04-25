@@ -4,9 +4,7 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 import { DBObj } from "./database";
 import { loadDir } from "../utils";
-import connectTask from "../tasks/connect.task";
 import { payload } from "../mu";
-import createTask from "../tasks/create.task";
 
 export type MiddlewareNext = (
   err: Error | null,
@@ -60,6 +58,8 @@ export interface Expression {
   args: Array<Expression>;
 }
 
+export type Service = (req: MuRequest) => Promise<MuRequest>;
+
 export interface Scope {
   [key: string]: any;
 }
@@ -70,6 +70,7 @@ export class Parser {
   private peg: any;
   private parser: peg.Parser;
   private fns: Map<string, MuFunction>;
+  private services: Map<string, Service>;
 
   private constructor() {
     this.stack = [];
@@ -78,6 +79,7 @@ export class Parser {
     });
     this.parser = peg.generate(this.peg);
     this.fns = new Map();
+    this.services =new Map();
     loadDir("./functions/", (name: string) =>
       console.log(`Module loaded: ${name}`)
     );
@@ -88,22 +90,33 @@ export class Parser {
     return this.instance;
   }
 
+
+  /**
+   * Add a service to execute different serverside
+   * commands from the client, and not player input. 
+   * Things like: message processing, connecting, 
+   * disconnecting, character creation, etc.
+   * @param name The name of the service to add.
+   * @param service The actual service to perform and
+   * return.
+   */
+  service( name: string, service: Service) {
+    this.services.set(name, service)
+  }
+
   /**
    * Process a request object frin tge ckuebt
    * @param req The request object.
    */
   async process(req: MuRequest): Promise<MuRequest> {
-    const command = req.payload.command;
-   
-    switch (command) {
-      case "message":
-        return this._handle(req);
-      case "connect":
-        return connectTask(req);
-      case "create":
-        return createTask(req);
-      default:
-        return payload(req, {command: "message"});
+    const command = req.payload.command.toLowerCase();
+    
+    if(this.services.has(command)) {
+      return this.services.get(command)!(req)
+    } else if(command === 'message') {
+      return this._handle(req)
+    } else {
+      return payload(req,{command: "message"})
     }
   }
 
@@ -137,14 +150,7 @@ export class Parser {
       // the entire stack.
       if (err != null) return Promise.reject(err);
       if (idx === this.stack.length) {
-        return Promise.resolve({
-          socket: req.socket,
-          payload: {
-            command: req.payload.command,
-            message: req.payload.message,
-            data: req.payload.data,
-          },
-        });
+        return Promise.resolve(req);
       }
 
       // Grab a new layer from the stack
