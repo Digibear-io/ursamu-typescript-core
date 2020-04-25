@@ -1,68 +1,17 @@
-import { Socket } from "socket.io";
 import peg from "pegjs";
 import { readFileSync } from "fs";
 import { resolve } from "path";
-import { DBObj } from "./database";
 import { loadDir } from "../utils";
-import { payload } from "../mu";
-
-export type MiddlewareNext = (
-  err: Error | null,
-  req: MuRequest
-) => Promise<any>;
-
-export type MiddlewareLayer = (
-  data: MuRequest,
-  next: MiddlewareNext
-) => Promise<MuRequest>;
-
-export interface MuRequest {
-  socket: Socket;
-  payload: {
-    command: string;
-    message: string;
-    data: {
-      en?: DBObj;
-      tar?: DBObj;
-      [key: string]: any;
-    };
-  };
-}
-
-export type MuFunction = (
-  enactor: DBObj,
-  args: string[],
-  scope: Scope
-) => Promise<any>;
-
-export interface Expression {
-  type: string;
-  value: string;
-  list?: Expression[];
-  operator: {
-    type: string;
-    value: string;
-  };
-  location?: {
-    start: {
-      offset: number;
-      line: number;
-      column: number;
-    };
-    end: {
-      offset: number;
-      line: number;
-      column: number;
-    };
-  };
-  args: Array<Expression>;
-}
-
-export type Service = (req: MuRequest) => Promise<MuRequest>;
-
-export interface Scope {
-  [key: string]: any;
-}
+import {
+  payload,
+  MiddlewareLayer,
+  MuFunction,
+  Service,
+  MuRequest,
+  Expression,
+  Scope,
+  DBObj,
+} from "../mu";
 
 export class Parser {
   private stack: MiddlewareLayer[];
@@ -79,10 +28,11 @@ export class Parser {
     });
     this.parser = peg.generate(this.peg);
     this.fns = new Map();
-    this.services =new Map();
-    loadDir("./functions/", (name: string) =>
-      console.log(`Module loaded: ${name}`)
-    );
+    this.services = new Map();
+    console.log("Loading functions...");
+    loadDir("./functions/", (name: string, loaded: Boolean) => {
+      if (!loaded) console.log(`Function failed to load: ${name}`);
+    });
   }
 
   static getInstance() {
@@ -90,18 +40,17 @@ export class Parser {
     return this.instance;
   }
 
-
   /**
    * Add a service to execute different serverside
-   * commands from the client, and not player input. 
-   * Things like: message processing, connecting, 
+   * commands from the client, and not player input.
+   * Things like: message processing, connecting,
    * disconnecting, character creation, etc.
    * @param name The name of the service to add.
    * @param service The actual service to perform and
    * return.
    */
-  service( name: string, service: Service) {
-    this.services.set(name, service)
+  service(name: string, service: Service) {
+    this.services.set(name, service);
   }
 
   /**
@@ -110,13 +59,13 @@ export class Parser {
    */
   async process(req: MuRequest): Promise<MuRequest> {
     const command = req.payload.command.toLowerCase();
-    
-    if(this.services.has(command)) {
-      return this.services.get(command)!(req)
-    } else if(command === 'message') {
-      return this._handle(req)
+
+    if (this.services.has(command)) {
+      return this.services.get(command)!(req);
+    } else if (command === "message") {
+      return this._handle(req);
     } else {
-      return payload(req,{command: "message"})
+      return payload(req, { command: "message" });
     }
   }
 
@@ -216,7 +165,7 @@ export class Parser {
         const func = this.fns.get(operator.value);
         if (func) {
           // Execute it and return the results.
-          
+
           // Evaluate the args for recursive functions before
           // envoking the function.
           const args: string[] = [];

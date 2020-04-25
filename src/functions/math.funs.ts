@@ -1,5 +1,5 @@
-import parser, { Expression, Scope } from "../api/parser";
-import { DBObj } from "../api/database";
+import parser from "../api/parser";
+import { DBObj, Scope } from "../mu";
 
 export default () => {
   // MATHS!
@@ -11,6 +11,7 @@ export default () => {
     let total = 0;
     return args
       .map((arg) => parseInt(arg, 10))
-      .reduce((p: number, c: number) => (p += c), 0).toString();
+      .reduce((p: number, c: number) => (p += c), 0)
+      .toString();
   });
 };

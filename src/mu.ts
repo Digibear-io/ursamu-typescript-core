@@ -6,16 +6,110 @@ import {
   IncomingMessage,
 } from "http";
 import { EventEmitter } from "events";
-import db, { DBObj } from "./api/database";
-import parser, { MuRequest, MiddlewareNext, MiddlewareLayer, MuFunction, Service } from "./api/parser";
+import db from "./api/database";
+import parser from "./api/parser";
 import md from "./api/md";
 import cmds, { Cmd } from "./api/commands";
 import shortid from "shortid";
 import config from "./api/config";
 import commands from "./middleware/commands.middleware";
 import flags from "./api/flags";
-import connect from './services/connect.service';
-import create from './services/create.service';
+import commandService from "./services/command.service";
+import connectService from "./services/connect.service";
+import createService from "./services/create.service";
+import msgdataMiddleware from "./middleware/msgdata.middleware";
+
+export type MiddlewareNext = (
+  err: Error | null,
+  req: MuRequest
+) => Promise<any>;
+
+export type MiddlewareLayer = (
+  data: MuRequest,
+  next: MiddlewareNext
+) => Promise<MuRequest> | MuRequest;
+
+export interface MuRequest {
+  socket: Socket;
+  payload: {
+    command: string;
+    message: string;
+    data: {
+      en?: DBObj;
+      tar?: DBObj;
+      [key: string]: any;
+    };
+  };
+}
+
+export type MuFunction = (
+  enactor: DBObj,
+  args: string[],
+  scope: Scope
+) => Promise<any>;
+
+export interface Expression {
+  type: string;
+  value: string;
+  list?: Expression[];
+  operator: {
+    type: string;
+    value: string;
+  };
+  location?: {
+    start: {
+      offset: number;
+      line: number;
+      column: number;
+    };
+    end: {
+      offset: number;
+      line: number;
+      column: number;
+    };
+  };
+  args: Array<Expression>;
+}
+
+export type Service = (req: MuRequest) => Promise<MuRequest>;
+
+export interface Scope {
+  [key: string]: any;
+}
+
+export interface DBObj {
+  _id?: string;
+  id: string;
+  desc: string;
+  name: string;
+  image?: string;
+  avatar?: string;
+  caption?: string;
+  type: "thing" | "player" | "room" | "exit";
+  alias?: string;
+  password?: string;
+  attributes: Attribute[];
+  flags: string[];
+  location: string;
+  contents: string[];
+  exits?: string[];
+  owner?: string;
+}
+
+export abstract class DbAdapter {
+  abstract model(...args: any[]): any | Promise<any>;
+  abstract get(...args: any[]): any | Promise<any>;
+  abstract find(...args: any[]): any | Promise<any>;
+  abstract create(...args: any[]): any | Promise<any>;
+  abstract update(...args: any[]): any | Promise<any>;
+  abstract delete(...args: any[]): any | Promise<any>;
+}
+
+export interface Attribute {
+  name: string;
+  value: string;
+  lastEdit: string;
+}
 
 export type Message = {
   command: string;
@@ -119,7 +213,7 @@ export class MU extends EventEmitter {
    * or instantiate multiple game functions at startup.
    * @param plugin The file to load at startup.
    */
-  configure(plugin: ()=>{}) {
+  configure(plugin: () => {}) {
     plugin();
   }
 
@@ -129,8 +223,8 @@ export class MU extends EventEmitter {
    * @param middleware The middleware layer to add to the
    * pipeline.
    */
-  middleware(middleware: MiddlewareLayer) {
-    parser.use(middleware);
+  middleware(...middleware: MiddlewareLayer[]) {
+    middleware.forEach((middleware) => parser.use(middleware));
   }
 
   /**
@@ -147,11 +241,11 @@ export class MU extends EventEmitter {
    * @param name Name of the function to add
    * @param func The body of the mushcode function
    */
-  fun(name:string, func: MuFunction) {
+  fun(name: string, func: MuFunction) {
     parser.add(name, func);
   }
 
-  service(name: string, service: Service){
+  service(name: string, service: Service) {
     parser.service(name, service);
   }
 
@@ -162,6 +256,7 @@ export class MU extends EventEmitter {
    */
   private async start() {
     // Handle client connections.
+    console.log("UrsaMU Booting...");
     this.io?.on("connection", async (socket: Socket) => {
       // Whenever a socket sends a message, process it, and
       // return the results.
@@ -196,8 +291,8 @@ export class MU extends EventEmitter {
               .send(res.payload);
           } else if (res.payload.data.tar.type === "room") {
             // Else if it's a room, just send to it's id.
-            
-            this.io?.to(res.payload.data.tar.id!).send(res.payload)
+
+            this.io?.to(res.payload.data.tar.id!).send(res.payload);
           }
         } else {
           if (res.payload.data.en) {
@@ -219,9 +314,10 @@ export class MU extends EventEmitter {
     });
 
     // Install some default services and middleware
-    this.service('connect', connect);
-    this.service('create', create);
-    this.middleware(commands);
+    this.service("connect", connectService);
+    this.service("create", createService);
+    this.service("command", commandService);
+    this.middleware(commands, msgdataMiddleware);
 
     // Test for starting room.  If one doesn't exist, create it!
     const limbo = await db.find({ type: "room" });
@@ -246,7 +342,7 @@ export class MU extends EventEmitter {
     }
 
     console.log("Startup Complete.");
-    this.emit('started');
+    this.emit("started");
   }
 }
 
@@ -272,6 +368,6 @@ export const payload = (req: MuRequest, payload?: Payload): MuRequest => {
   };
 };
 
-export {  db, config, parser, cmds, flags, MuRequest, DBObj, MiddlewareNext };
+export { db, config, parser, cmds, flags };
 
 export default MU.getInstance();

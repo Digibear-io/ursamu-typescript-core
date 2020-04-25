@@ -1,39 +1,6 @@
 import DataStore from "nedb";
 import { resolve } from "path";
-
-export interface DBObj {
-  _id?: string;
-  id: string;
-  desc: string;
-  name: string;
-  image?: string;
-  avatar?: string;
-  caption?: string;
-  type: "thing" | "player" | "room" | "exit";
-  alias?: string;
-  password?: string;
-  attributes: Attribute[];
-  flags: string[];
-  location: string;
-  contents: string[];
-  exits?: string[];
-  owner?: string;
-}
-
-export abstract class DbAdapter {
-  abstract model(...args: any[]): any | Promise<any>;
-  abstract get(...args: any[]): any | Promise<any>;
-  abstract find(...args: any[]): any | Promise<any>;
-  abstract create(...args: any[]): any | Promise<any>;
-  abstract update(...args: any[]): any | Promise<any>;
-  abstract delete(...args: any[]): any | Promise<any>;
-}
-
-export interface Attribute {
-  name: string;
-  value: string;
-  lastEdit: string;
-}
+import { DbAdapter, DBObj } from "../mu";
 
 export class NeDB<T> implements DbAdapter {
   path?: string;
@@ -76,7 +43,7 @@ export class NeDB<T> implements DbAdapter {
    * Get a single database document.
    * @param query The query object to search for.
    */
-  get(query: any): Promise<T| undefined> {
+  get(query: any): Promise<T | undefined> {
     return new Promise((resolve: any, reject: any) =>
       this.db?.findOne<T>(query, (err: Error, doc: any) => {
         if (err) reject(err);
@@ -157,5 +124,3 @@ export class NeDB<T> implements DbAdapter {
 }
 
 export default new NeDB<DBObj>(resolve(__dirname, "../../data/ursa.db"));
-
-

@@ -7,10 +7,10 @@ import md from "./md";
 type Exec = (req: MuRequest, args: string[]) => Promise<MuRequest>;
 export type Cmd = {
   name: string;
-    flags?: string;
-    pattern: RegExp | string;
-    exec: Exec;
-}
+  flags?: string;
+  pattern: RegExp | string;
+  exec: Exec;
+};
 export class MuCommand {
   private _pattern: RegExp | string;
   flags: string;
@@ -21,7 +21,7 @@ export class MuCommand {
     name,
     flags,
     pattern,
-    exec
+    exec,
   }: {
     name: string;
     flags?: string;
@@ -106,9 +106,10 @@ export class Commands {
    * Instantiate the object.
    */
   init() {
-    loadDir("./commands/", (name: string) =>
-      console.log(`Module loaded: ${name}`)
-    );
+    console.log("Loading Commands...");
+    loadDir("./commands/", (name: string, loaded: Boolean) => {
+      if (!loaded) console.log(`Command failed to loaded: ${name}`);
+    });
   }
 
   /**
@@ -119,7 +120,7 @@ export class Commands {
     name,
     flags,
     pattern,
-    exec
+    exec,
   }: {
     name: string;
     flags?: string;
@@ -136,13 +137,13 @@ export class Commands {
    */
   match(str: string) {
     return this.cmds
-      .map(cmd => {
+      .map((cmd) => {
         const matched = str.match(cmd.pattern);
         if (matched) {
           return {
             args: matched,
             exec: cmd.exec,
-            flags: cmd.flags
+            flags: cmd.flags,
           };
         } else {
           return;
@@ -152,15 +153,9 @@ export class Commands {
   }
 
   async force(req: MuRequest, name: string, args: string[] = []) {
-    const results = await this.cmds
-      .filter(cmd => cmd.name.toLowerCase() === name.toLowerCase())[0]
+    return await this.cmds
+      .filter((cmd) => cmd.name.toLowerCase() === name.toLowerCase())[0]
       .exec(req, args);
-
-    if (results.payload.message)
-      results.payload.message = md.render(
-        results.payload.message.replace("\u250D", "(").replace("\u2511", ")")
-      );
-    mu.io?.to(req.socket.id).send(results.payload);
   }
 
   static getInstance() {

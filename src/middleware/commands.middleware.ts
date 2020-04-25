@@ -1,5 +1,4 @@
-
-import mu, {cmds, flags, MuRequest, MiddlewareNext } from "../mu";
+import mu, { cmds, flags, MuRequest, MiddlewareNext, payload } from "../mu";
 
 export default async (req: MuRequest, next: MiddlewareNext) => {
   const id = req.socket.id;
@@ -22,15 +21,17 @@ export default async (req: MuRequest, next: MiddlewareNext) => {
       .exec(req, matched.args)
       .catch((err: Error) => next(err, req));
 
-    req.payload.data.matched = matched ? true : false;
-    req.payload.command = res.payload.command;
-    req.payload.message = res.payload.message;
-    req.payload.data = res.payload.data;
-    return next(null, req);
+    return next(
+      null,
+      payload(req, { data: { matched: matched ? true : false } })
+    );
   } else if (!mu.connections.has(id)) {
     req.payload.data.matched = matched ? true : false;
     req.payload.message = "";
-    return next(null, req);
+    return next(
+      null,
+      payload(req, { message: "", data: { matched: matched ? true : false } })
+    );
   }
 
   return next(null, req);
