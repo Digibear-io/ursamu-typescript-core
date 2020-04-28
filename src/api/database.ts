@@ -110,6 +110,7 @@ export class NeDB<T> implements DbAdapter {
       } else if (tar === "here") {
         return this.get({ id: en.location });
       } else {
+
         return this.get({
           $where: function () {
             if (this.name.toLowerCase() === tar) return true;

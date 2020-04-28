@@ -18,6 +18,7 @@ import commandService from "./services/command.service";
 import connectService from "./services/connect.service";
 import createService from "./services/create.service";
 import msgdataMiddleware from "./middleware/msgdata.middleware";
+import substitutionsMiddleware from "./middleware/substitutions.middleware";
 
 export type MiddlewareNext = (
   err: Error | null,
@@ -317,7 +318,7 @@ export class MU extends EventEmitter {
     this.service("connect", connectService);
     this.service("create", createService);
     this.service("command", commandService);
-    this.middleware(commands, msgdataMiddleware);
+    this.middleware(commands, substitutionsMiddleware, msgdataMiddleware);
 
     // Test for starting room.  If one doesn't exist, create it!
     const limbo = await db.find({ type: "room" });

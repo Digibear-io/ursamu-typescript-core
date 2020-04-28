@@ -11,7 +11,7 @@ export interface LookData {
 export default () => {
   mu.cmd({
     name: "Look",
-    pattern: /^look(?:\s+?(\w+))?/i,
+    pattern: /l(?:\s+?(\w+))?$|^look(?:\s+?(\w+))?$/i,
     flags: "connected",
     exec: async (req: MuRequest, args: string[]) => {
       /**
@@ -56,10 +56,12 @@ export default () => {
       const tar = await db.target(en!, args[1]);
       if (tar) {
         if (canSee(en!, tar)) {
+          look.en = en;
+          look.tar = tar;
           return payload(req, {
             command: "desc",
             message: tar.desc,
-            data: { en, tar, look },
+            data: { en, tar: en, look },
           });
         } else {
           return {

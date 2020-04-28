@@ -1,5 +1,6 @@
 import config from "./config";
-import db, { DBObj } from "./database";
+import db from "./database";
+import { DBObj } from "../mu";
 
 export interface Flag {
   name: string;

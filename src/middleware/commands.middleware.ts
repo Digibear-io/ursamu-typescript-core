@@ -23,7 +23,7 @@ export default async (req: MuRequest, next: MiddlewareNext) => {
 
     return next(
       null,
-      payload(req, { data: { matched: matched ? true : false } })
+      payload(res, { data: { matched: matched ? true : false } })
     );
   } else if (!mu.connections.has(id)) {
     req.payload.data.matched = matched ? true : false;
