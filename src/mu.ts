@@ -281,6 +281,15 @@ export class MU extends EventEmitter {
           res.payload.data.en = this.connections.get(res.socket.id);
         }
 
+        // if the request type isn't a message, and there's no target set,
+        // the target should be the enactor.
+        if (
+          res.payload.command.toLowerCase() !== "message" &&
+          !res.payload.data.tar
+        ) {
+          res.payload.data.tar = res.payload.data.en;
+        }
+
         // If the response has a target, send it to the target's ID.
         // else, send it the response to the enactor's location by default
         // for general chat like behavior.
