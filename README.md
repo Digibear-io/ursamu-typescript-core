@@ -4,9 +4,9 @@
 
 ## What is UrsaMU
 
-**UrsaMU** is a **modern implementation** of the **MUSH** style internet talker, built on the shoulders of giants, and impimented with [Typescript](typescriptlang.org) and [Socket.io](socket.io). While slightly opinionated towards a MUSH command and data structure, **UrsaMU** is flexible enough to be configured to fit most needs. For an in depth look at the inner workings of **UrsaMU**, check out the [documentation](#). 
+**UrsaMU** is a **modern implementation** of the **MUSH** style internet talker, built on the shoulders of giants, and impimented with [Typescript](typescriptlang.org) and [Socket.io](socket.io). While slightly opinionated towards a MUSH command and data structure, **UrsaMU** is flexible enough to be configured to fit most needs. For an in depth look at the inner workings of **UrsaMU**, check out the [documentation](#).
 
->**UrsaMU** Is still in the very early stages in development.  This file (and repo) Are subject to change unexpectedly until the initial `0.1.0` release.
+> **UrsaMU** Is still in the very early stages in development. This file (and repo) Are subject to change unexpectedly until the initial `0.1.0` release.
 
 [Installation](#Installation)<br>
 [Configuration](#) <br>
@@ -21,12 +21,15 @@
 [Feature Roadmap](#feature-roadmap)
 
 ## Installation
+
 `npm i @ursamu/core`
 
 ## Basic Usage
+
 **UrsaMU** Can bind to any webserver software that runs on the base Node.js http(s) modules (Express, Next, Sapper, Koa, etc, etc...), or it can run it's own standalone http server with some very basic request handling functionality.
 
 ### Node.js HTTP
+
 ```JavaScript
 import mu from "@ursamu/core";
 import {createServer} from "http";
@@ -35,7 +38,9 @@ import {createServer} from "http";
 const server = createServer(/* handler */);
 mu.server(server).listen(8000);
 ```
+
 ### With Express
+
 ```JavaScript
 import mu from "@ursamu/core";
 import express from "express";
@@ -52,12 +57,14 @@ app.get("/", (req:Request, res: Response) => {
 // Attach the mu to the express app, and listen for connections.
 mu.server(app).listen(8000);
 ```
+
 ### Or Standalone.
+
 ```JavaScript
 mu.serve(8000)
 ```
 
-The same goes for the **Socket.io** implementation.  If you have a specality setup for your communication layer, **UrsaMU** can bind to it.
+The same goes for the **Socket.io** implementation. If you have a specality setup for your communication layer, **UrsaMU** can bind to it.
 
 ```JavaScript
 import io from "Socket.io";
@@ -71,15 +78,19 @@ server.listen(8000)
 ```
 
 ## Data Structure
-**UrsamMU** communicates all of it's messages between client and server using specific JSON. The data property acts as a place to pass whatever 'off band' data you need when communicating with either end.  When being sent to the client, the following data is available:
+
+**UrsamMU** communicates all of it's messages between client and server using specific JSON. The data property acts as a place to pass whatever 'off band' data you need when communicating with either end. When being sent to the client, the following data is available:
+
 ```JSON
 {
   "command": "message",
   "message": "A String to return to the client",
-  "data": {} 
+  "data": {}
 }
 ```
+
 Once a message is sent to the server, it's slightly reformatted for internal record keeping as an object literal:
+
 ```JavaScript
 {
   socket, // Sender socket info.
@@ -92,22 +103,25 @@ Once a message is sent to the server, it's slightly reformatted for internal rec
 ```
 
 ## Commands
+
 **UrsaMU** Allows you to write commands, and even override the few commands the core package ships with.
 
 ```JavaScript
-import { cmds, MuRequest, payload } from "@ursamu/core";
+import { cmds, payload } from "@ursamu/core";
+import { MuRequest } from "@ursamu/core/types";
 
 cmds.add({
   name: "Test",
   flags: "connected",
   pattern: "+test *",
-  exec: async (req: MuRequest, args: string[]) => 
+  exec: async (req: MuRequest, args: string[]) =>
     payload(req, {
       command: "response",
       message: `Woot! You typed '${args[1]}'!`
     })
 })
 ```
+
 - `name` The name of the command.
 - `flags` A string of flags the object must have or not (!) have to use the command. Access flags.
 - `pattern` accepts either wildcard string format, or regular expressions for more fine tuned control. Internally, the wildcard is replaced with a regular expression equiv.
@@ -115,7 +129,8 @@ cmds.add({
 - `payload()` Format the payload sectiontion of the response so you can just give the pieces that are important to your code.
 
 ## Functions
-Adding a mushcode function is similar to adding a command, except working with the parser instead of the `cmds` object. Functions can be evaluated by commands.  As with traditional mushcode, adding square braces `[]` around a function expression imbedded within a string will evaluate the code before the string is returned.
+
+Adding a mushcode function is similar to adding a command, except working with the parser instead of the `cmds` object. Functions can be evaluated by commands. As with traditional mushcode, adding square braces `[]` around a function expression imbedded within a string will evaluate the code before the string is returned.
 
 ```JavaScript
 import { parser, DBObj, Scope } from "@ursamu/core";
@@ -127,24 +142,26 @@ parser.add("add", (en: DBObj, args: string[], scope: Scope) => {
     .reduce((prev: number, curr: number) => prev += curr, 0);
 })
 ```
+
 ## Middleware
-All input from the game passes through a series of middleware to modify an incoming message before the results of the string are returned.  **UrsaMU** ships with a `command`, and `movement` parsing middlewares, but the system is infinitely extendable.
+
+All input from the game passes through a series of middleware to modify an incoming message before the results of the string are returned. **UrsaMU** ships with a `command`, and `movement` parsing middlewares, but the system is infinitely extendable.
 
 ```JavaScript
 import mu, { MuRequest, Next } from "@ursamu/core";
 
 // Add a new middleware to the message pipeline
 mu.use((req: MuRequest, Next: Next) => {
-  // Add some data to the request object.  This data will 
+  // Add some data to the request object.  This data will
   // be attached to the request object for the rest of it's
-  // lifecycle.  
+  // lifecycle.
 
   req.payload.data.created = Date.now();
   return next(null, req);
 })
 ```
 
-* `Next(err: Error | null, data: MuRequest)` At the end of every middleware, you must return the `next` function, or your middleware chain will hang indefinitely.
+- `Next(err: Error | null, data: MuRequest)` At the end of every middleware, you must return the `next` function, or your middleware chain will hang indefinitely.
 
 ## License
 

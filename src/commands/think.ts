@@ -1,4 +1,5 @@
-import mu , { MuRequest, parser} from "../mu";
+import mu, { parser } from "../mu";
+import { MuRequest } from "../types";
 
 export default () => {
   mu.cmd({
@@ -12,9 +13,9 @@ export default () => {
         payload: {
           command: "think",
           message: await parser.run(en!, args[1], {}),
-          data: req.payload.data
-        }
+          data: req.payload.data,
+        },
       };
-    }
+    },
   });
 };

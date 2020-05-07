@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>UrsaMU Client</title>
+    <title>UrsaMU Test Client</title>
     <link
       href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:ital,wght@0,400;0,700;1,400;1,700&display=swap"
       rel="stylesheet"
@@ -91,13 +91,13 @@
 
     // Monitor keypresses.  If the user hits enter, send
     // the message off to the server!
-    input.addEventListener("keypress", ev => {
+    input.addEventListener("keypress", (ev) => {
       if (ev.keyCode === 13 && !ev.shiftKey) {
         ev.preventDefault();
         socket.send({
           command: "message",
           message: input.innerText,
-          data: {}
+          data: {},
         });
         input.innerText = "";
       }
@@ -107,28 +107,18 @@
     // the login screen.
     socket.on("connect", () => {
       socket.send({
-        command: "connect",
+        command: "textconnect",
         message: "",
-        data: {
-          token: window.sessionStorage.getItem("token")
-        }
+        data: {},
       });
     });
 
     // When a new message comes in, add it to the feed.
-    socket.on("message", res => {
-      if (res.data.jwt) {
-        window.sessionStorage.setItem("token", res.data.jwt);
-      }
+    socket.on("message", (res) => {
       const li = document.createElement("li");
       li.className = "item";
       li.innerHTML = res.message;
       feed.appendChild(li);
     });
-
-    // On a window reload, clear the token.
-    window.onbeforeunload = e => {
-      window.sessionStorage.removeItem("token");
-    };
   </script>
 </html>

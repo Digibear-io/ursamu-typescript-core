@@ -1,4 +1,5 @@
-import mu, {MuRequest, payload} from "../mu";
+import mu, { payload } from "../mu";
+import { MuRequest } from "../types";
 
 export default () => {
   mu.cmd({
@@ -9,6 +10,6 @@ export default () => {
       const en = mu.connections.get(req.socket.id);
 
       return payload(req);
-    }
+    },
   });
 };

@@ -1,4 +1,5 @@
-import mu, { cmds, flags, MuRequest, MiddlewareNext, payload } from "../mu";
+import mu, { cmds, flags, payload } from "../mu";
+import { MuRequest, MiddlewareNext } from "../types";
 
 export default async (req: MuRequest, next: MiddlewareNext) => {
   const id = req.socket.id;

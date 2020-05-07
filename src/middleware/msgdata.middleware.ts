@@ -1,5 +1,6 @@
-import { MuRequest, MiddlewareNext, payload } from "../mu";
+import { payload } from "../mu";
 import shortid from "shortid";
+import { MuRequest, MiddlewareNext } from "../types";
 
 export default (req: MuRequest, next: MiddlewareNext) =>
   next(

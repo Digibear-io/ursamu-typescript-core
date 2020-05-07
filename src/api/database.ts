@@ -1,6 +1,6 @@
 import DataStore from "nedb";
 import { resolve } from "path";
-import { DbAdapter, DBObj } from "../mu";
+import { DbAdapter, DBObj } from "../types";
 
 export class NeDB<T> implements DbAdapter {
   path?: string;
@@ -110,7 +110,6 @@ export class NeDB<T> implements DbAdapter {
       } else if (tar === "here") {
         return this.get({ id: en.location });
       } else {
-
         return this.get({
           $where: function () {
             if (this.name.toLowerCase() === tar) return true;

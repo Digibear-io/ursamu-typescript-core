@@ -1,7 +1,6 @@
 import { types } from "util";
 import { loadDir } from "../utils";
-import mu, { MuRequest } from "../mu";
-import md from "./md";
+import { MuRequest } from "../types";
 
 type Exec = (req: MuRequest, args: string[]) => Promise<MuRequest>;
 export type Cmd = {

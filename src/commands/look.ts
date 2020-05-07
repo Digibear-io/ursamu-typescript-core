@@ -1,4 +1,5 @@
-import mu, { db, payload, DBObj, flags, MuRequest } from "../mu";
+import mu, { db, payload, flags } from "../mu";
+import { DBObj, MuRequest } from "../types";
 
 export interface LookData {
   en: DBObj | undefined;

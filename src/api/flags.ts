@@ -1,6 +1,6 @@
 import config from "./config";
 import db from "./database";
-import { DBObj } from "../mu";
+import { DBObj } from "../types";
 
 export interface Flag {
   name: string;
@@ -30,7 +30,7 @@ class Flags {
    * @param flg The name of the flag to check
    */
   isFlag(flg: string) {
-    return this.flags.find(flag =>
+    return this.flags.find((flag) =>
       flag.name.match(new RegExp(flg.replace(/[!\+]/, ""), "i"))
     );
   }
@@ -127,7 +127,7 @@ class Flags {
    * @param flag The flag to remove.
    */
   async remFlag(tar: DBObj, flag: string) {
-    tar.flags = tar.flags.filter(flg => {
+    tar.flags = tar.flags.filter((flg) => {
       const flagName = this.isFlag(flg);
       if (flagName && flag !== flagName.name) return true;
       return false;
@@ -143,7 +143,7 @@ class Flags {
   private _bitLvl(tar: DBObj) {
     return (
       tar.flags
-        .map(flag => this.flags.find(flg => flg.name === flag)?.lvl)
+        .map((flag) => this.flags.find((flg) => flg.name === flag)?.lvl)
         ?.reduce((pre = 0, curr = 0) => {
           return pre < curr ? curr : pre;
         }, 0) || 0

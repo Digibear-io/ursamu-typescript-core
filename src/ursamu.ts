@@ -12,5 +12,3 @@ app.use(express.static("public"));
 app.get("/", (req: Request, res: Response) =>
   res.send("Welcome to UrsaMU!").end()
 );
-
-process.on("SIGINT", () => process.exit(1));

@@ -1,10 +1,11 @@
-import mu, { payload, MuRequest, flags, db } from "../mu";
+import mu, { payload, flags, db } from "../mu";
 import { sha512 } from "js-sha512";
+import { MuRequest } from "../types";
 
 /**
  * Handle a socket connecting to the server.
  */
-export default async (req: MuRequest): Promise<MuRequest> => {
+const connect = async (req: MuRequest): Promise<MuRequest> => {
   const { user, password } = req.payload.data;
 
   if (user && password) {
@@ -72,3 +73,5 @@ export default async (req: MuRequest): Promise<MuRequest> => {
     });
   }
 };
+
+export default connect;

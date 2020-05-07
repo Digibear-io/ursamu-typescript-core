@@ -2,16 +2,16 @@ import peg from "pegjs";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import { loadDir } from "../utils";
+import { payload } from "../mu";
 import {
-  payload,
   MiddlewareLayer,
   MuFunction,
   Service,
   MuRequest,
+  DBObj,
   Expression,
   Scope,
-  DBObj,
-} from "../mu";
+} from "../types";
 
 export class Parser {
   private stack: MiddlewareLayer[];

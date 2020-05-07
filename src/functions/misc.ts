@@ -1,5 +1,5 @@
 import parser from "../api/parser";
-import { DBObj, Scope } from "../mu";
+import { DBObj, Scope } from "../types";
 
 export default () => {
   parser.add("image", async (en: DBObj, args: any[], scope: Scope) => {

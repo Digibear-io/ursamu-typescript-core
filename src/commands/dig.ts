@@ -1,5 +1,6 @@
-import mu, { db, payload, MuRequest, DBObj } from "../mu";
+import mu, { db, payload } from "../mu";
 import shortid from "shortid";
+import { MuRequest, DBObj } from "../types";
 
 export default () => {
   mu.cmd({

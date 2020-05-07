@@ -2,7 +2,7 @@
   "name": "ursamu",
   "version": "0.1.0",
   "description": "",
-  "main": "./src/ursaminor.js",
+  "main": "./src/ursamu.js",
   "nodemonConfig": {
     "ignore": [
       "**/*.test.ts",

@@ -14,109 +14,22 @@ import shortid from "shortid";
 import config from "./api/config";
 import commands from "./middleware/commands.middleware";
 import flags from "./api/flags";
-import commandService from "./services/command.service";
-import connectService from "./services/connect.service";
-import createService from "./services/create.service";
 import msgdataMiddleware from "./middleware/msgdata.middleware";
 import substitutionsMiddleware from "./middleware/substitutions.middleware";
+import {
+  DBObj,
+  MiddlewareLayer,
+  MuFunction,
+  Service,
+  Message,
+  MuRequest,
+  Plugin,
+} from "./types";
 
-export type MiddlewareNext = (
-  err: Error | null,
-  req: MuRequest
-) => Promise<any>;
-
-export type MiddlewareLayer = (
-  data: MuRequest,
-  next: MiddlewareNext
-) => Promise<MuRequest> | MuRequest;
-
-export interface MuRequest {
-  socket: Socket;
-  payload: {
-    command: string;
-    message: string;
-    data: {
-      en?: DBObj;
-      tar?: DBObj;
-      [key: string]: any;
-    };
-  };
-}
-
-export type MuFunction = (
-  enactor: DBObj,
-  args: string[],
-  scope: Scope
-) => Promise<any>;
-
-export interface Expression {
-  type: string;
-  value: string;
-  list?: Expression[];
-  operator: {
-    type: string;
-    value: string;
-  };
-  location?: {
-    start: {
-      offset: number;
-      line: number;
-      column: number;
-    };
-    end: {
-      offset: number;
-      line: number;
-      column: number;
-    };
-  };
-  args: Array<Expression>;
-}
-
-export type Service = (req: MuRequest) => Promise<MuRequest>;
-
-export interface Scope {
-  [key: string]: any;
-}
-
-export interface DBObj {
-  _id?: string;
-  id: string;
-  desc: string;
-  name: string;
-  image?: string;
-  avatar?: string;
-  caption?: string;
-  type: "thing" | "player" | "room" | "exit";
-  alias?: string;
-  password?: string;
-  attributes: Attribute[];
-  flags: string[];
-  location: string;
-  contents: string[];
-  exits?: string[];
-  owner?: string;
-}
-
-export abstract class DbAdapter {
-  abstract model(...args: any[]): any | Promise<any>;
-  abstract get(...args: any[]): any | Promise<any>;
-  abstract find(...args: any[]): any | Promise<any>;
-  abstract create(...args: any[]): any | Promise<any>;
-  abstract update(...args: any[]): any | Promise<any>;
-  abstract delete(...args: any[]): any | Promise<any>;
-}
-
-export interface Attribute {
-  name: string;
-  value: string;
-  lastEdit: string;
-}
-
-export type Message = {
-  command: string;
-  message: string;
-  data: { [key: string]: any };
-};
+import command from "./services/command.service";
+import create from "./services/create.service";
+import connect from "./services/connect.service";
+import textConnect from "./services/textConnect.service";
 
 /**
  * The main MU class.
@@ -128,12 +41,14 @@ export class MU extends EventEmitter {
   io: IOServer | undefined;
   private static instance: MU;
   connections: Map<string, DBObj>;
+  plugins: Plugin[];
 
   private constructor() {
     super();
     this.io;
     this.http;
     this.connections = new Map();
+    this.plugins = [];
   }
 
   /**
@@ -214,8 +129,8 @@ export class MU extends EventEmitter {
    * or instantiate multiple game functions at startup.
    * @param plugin The file to load at startup.
    */
-  configure(plugin: () => {}) {
-    plugin();
+  configure(plugin: Plugin) {
+    this.plugins.push(plugin);
   }
 
   /**
@@ -251,6 +166,49 @@ export class MU extends EventEmitter {
   }
 
   /**
+   * Send a message depending on the enactor and target fields.
+   * @param res The response from the MU to be sent back to
+   * a potential list of targets.
+   */
+  send(res: MuRequest) {
+    // If the request doesn't have an enactor attached, try to get
+    // the character information from the socket if it exists.
+    if (this.connections.has(res.socket.id) && !res.payload.data.en) {
+      res.payload.data.en = this.connections.get(res.socket.id);
+    }
+
+    // if the request type isn't a message, and there's no target set,
+    // the target should be the enactor.
+    if (
+      res.payload.command.toLowerCase() !== "message" &&
+      !res.payload.data.tar
+    ) {
+      res.payload.data.tar = res.payload.data.en;
+    }
+
+    // If the response has a target, send Send the message depending on
+    // the target type. else, send it the response to the enactor's location
+    // by default for general chat like behavior.
+    if (res.payload.data.tar) {
+      // If it's a player, send it to their socket ID.
+      if (res.payload.data.tar.type === "player") {
+        this.io?.to(this.socketID(res.payload.data.tar._id!)).send(res.payload);
+      } else if (res.payload.data.tar.type === "room") {
+        // Else if it's a room, just send to it's id.
+
+        this.io?.to(res.payload.data.tar.id!).send(res.payload);
+      }
+    } else {
+      if (res.payload.data.en) {
+        this.io?.to(res.payload.data.en.location).send(res.payload);
+      } else {
+        // Just send to the socket.
+        this.io?.to(res.socket.id).send(res.payload);
+      }
+    }
+  }
+
+  /**
    * Start the game engine.
    * @param callback An optional function to execute when the
    * MU startup process ends
@@ -261,8 +219,8 @@ export class MU extends EventEmitter {
     this.io?.on("connection", async (socket: Socket) => {
       // Whenever a socket sends a message, process it, and
       // return the results.
-      socket.on("message", async (message: string) => {
-        const payload: Message = JSON.parse(message);
+      socket.on("message", async (message: Message) => {
+        const payload: Message = message;
         const res = await parser.process({
           socket,
           payload,
@@ -275,40 +233,7 @@ export class MU extends EventEmitter {
             : ""
         );
 
-        // If the request doesn't have an enactor attached, try to get
-        // the character information from the socket if it exists.
-        if (this.connections.has(res.socket.id) && !res.payload.data.en) {
-          res.payload.data.en = this.connections.get(res.socket.id);
-        }
-
-        // if the request type isn't a message, and there's no target set,
-        // the target should be the enactor.
-        if (
-          res.payload.command.toLowerCase() !== "message" &&
-          !res.payload.data.tar
-        ) {
-          res.payload.data.tar = res.payload.data.en;
-        }
-
-        // If the response has a target, send it to the target's ID.
-        // else, send it the response to the enactor's location by default
-        // for general chat like behavior.
-        if (res.payload.data.tar) {
-          // If it's a player, send it to their socket ID.
-          if (res.payload.data.tar.type === "player") {
-            this.io
-              ?.to(this.socketID(res.payload.data.tar._id!))
-              .send(res.payload);
-          } else if (res.payload.data.tar.type === "room") {
-            // Else if it's a room, just send to it's id.
-
-            this.io?.to(res.payload.data.tar.id!).send(res.payload);
-          }
-        } else {
-          if (res.payload.data.en) {
-            this.io?.to(res.payload.data.en.location).send(res.payload);
-          }
-        }
+        this.send(res);
       });
 
       // When a socket disconnects rem ove the connected
@@ -321,13 +246,31 @@ export class MU extends EventEmitter {
           }
         }
       });
+
+      // When there's an error with the socket, remove
+      // the connected tag, and boot them from the connected list.
+
+      socket.on("error", async () => {
+        if (this.connections.has(socket.id)) {
+          const player = this.connections.get(socket.id);
+          if (player) {
+            await flags.setFlag(player, "!connected");
+          }
+        }
+      });
     });
 
-    // Install some default services and middleware
-    this.service("connect", connectService);
-    this.service("create", createService);
-    this.service("command", commandService);
+    // Load the default middleware.
     this.middleware(commands, substitutionsMiddleware, msgdataMiddleware);
+    this.service("command", command);
+    this.service("connect", connect);
+    this.service("create", create);
+    this.service("textconnect", textConnect);
+
+    // Run plugins.
+    for await (const plugin of this.plugins) {
+      plugin();
+    }
 
     // Test for starting room.  If one doesn't exist, create it!
     const limbo = await db.find({ type: "room" });

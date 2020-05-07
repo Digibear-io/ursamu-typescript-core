@@ -1,4 +1,5 @@
-import mu, { db, MuRequest, flags, DBObj, payload } from "../mu";
+import mu, { db, flags, payload } from "../mu";
+import { MuRequest, DBObj } from "../types";
 
 export default () => {
   mu.cmd({

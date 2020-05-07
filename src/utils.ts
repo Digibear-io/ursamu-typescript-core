@@ -1,4 +1,4 @@
-import { readdirSync, Dirent } from "fs";
+import { readdirSync } from "fs";
 import { resolve } from "path";
 import mu from "./mu";
 
@@ -27,7 +27,7 @@ export const loadDir = async (
         if (typeof callback === "function") {
           callback(name, loaded);
         } else {
-          mu.emit('loaded', name, loaded);
+          mu.emit("loaded", name, loaded);
         }
       }
     }
@@ -39,14 +39,17 @@ export const loadDir = async (
  */
 export class Singleton {
   private static _instance: Singleton = new Singleton();
-  
-  constructor(){
-    if (Singleton._instance){
-      throw new Error('Error: Instantiation failed. Use getInstance() instead.');
+
+  constructor() {
+    if (Singleton._instance) {
+      throw new Error(
+        "Error: Instantiation failed. Use getInstance() instead."
+      );
     }
     Singleton._instance = this;
   }
 
-  public getInstance() { return Singleton._instance;}
-
+  public getInstance() {
+    return Singleton._instance;
+  }
 }
