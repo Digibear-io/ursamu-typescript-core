@@ -41,8 +41,7 @@ const create = async (req: MuRequest): Promise<MuRequest> => {
       contents: [],
       desc: "You see nothing special.",
       flags,
-      id: shortid.generate(),
-      location: room?.id || "000",
+      location: room?._id || "000",
       name: user,
       type: "player",
       password: sha512(password),
@@ -61,4 +60,4 @@ const create = async (req: MuRequest): Promise<MuRequest> => {
   }
 };
 
-export default create;
+export default mu.service("create", create);

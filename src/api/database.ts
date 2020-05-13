@@ -108,7 +108,7 @@ export class NeDB<T> implements DbAdapter {
       if (tar === "me") {
         return Promise.resolve(en);
       } else if (tar === "here") {
-        return this.get({ id: en.location });
+        return this.get({ _id: en.location });
       } else {
         return this.get({
           $where: function () {
@@ -118,7 +118,7 @@ export class NeDB<T> implements DbAdapter {
         });
       }
     } else {
-      return this.get({ id: en.location });
+      return this.get({ _id: en.location });
     }
   }
 }

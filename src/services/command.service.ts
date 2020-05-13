@@ -5,4 +5,4 @@ const command = async (req: MuRequest): Promise<MuRequest> => {
   return await cmds.force(req, req.payload.data.name, req.payload.data.args);
 };
 
-export default command;
+export default mu.service("command", command);

@@ -5,7 +5,6 @@ export default async (req: MuRequest, next: MiddlewareNext) => {
   const id = req.socket.id;
   const message = req.payload.message || "";
   let matched = cmds.match(message);
-
   const _hasFlags = () => {
     if (matched && mu.connections.has(id)) {
       const char = mu.connections.get(id);

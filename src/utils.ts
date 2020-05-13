@@ -1,4 +1,4 @@
-import { readdirSync } from "fs";
+import { readdirSync, readFileSync } from "fs";
 import { resolve } from "path";
 import mu from "./mu";
 
@@ -15,7 +15,7 @@ export const loadDir = async (
 ) => {
   const dir = readdirSync(resolve(__dirname, path), { withFileTypes: true });
   for (const dirent of dir) {
-    if ((dirent.isFile(), dirent.name.endsWith(".ts"))) {
+    if (dirent.isFile() && dirent.name.endsWith(".ts")) {
       const module = await import(
         resolve(resolve(__dirname, path, dirent.name))
       ).catch((err: Error) => console.log(err));
@@ -30,6 +30,18 @@ export const loadDir = async (
           mu.emit("loaded", name, loaded);
         }
       }
+    }
+  }
+};
+
+export const loadText = async (path: string) => {
+  const dir = readdirSync(resolve(__dirname, path), { withFileTypes: true });
+  for (const dirent of dir) {
+    if (dirent.isFile() && dirent.name.endsWith(".md")) {
+      const file = readFileSync(resolve(__dirname, path, dirent.name), {
+        encoding: "utf8",
+      });
+      mu.text.set(dirent.name.split(".")[0], file);
     }
   }
 };

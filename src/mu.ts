@@ -10,7 +10,6 @@ import db from "./api/database";
 import parser from "./api/parser";
 import md from "./api/md";
 import cmds, { Cmd } from "./api/commands";
-import shortid from "shortid";
 import config from "./api/config";
 import commands from "./middleware/commands.middleware";
 import flags from "./api/flags";
@@ -25,11 +24,7 @@ import {
   MuRequest,
   Plugin,
 } from "./types";
-
-import command from "./services/command.service";
-import create from "./services/create.service";
-import connect from "./services/connect.service";
-import textConnect from "./services/textConnect.service";
+import { loadDir, loadText } from "./utils";
 
 /**
  * The main MU class.
@@ -41,14 +36,18 @@ export class MU extends EventEmitter {
   io: IOServer | undefined;
   private static instance: MU;
   connections: Map<string, DBObj>;
-  plugins: Plugin[];
+  private _plugins: Plugin[];
+  private _services: Map<string, Service>;
+  text: Map<string, string>;
 
   private constructor() {
     super();
     this.io;
     this.http;
     this.connections = new Map();
-    this.plugins = [];
+    this._plugins = [];
+    this._services = new Map();
+    this.text = new Map();
   }
 
   /**
@@ -129,8 +128,8 @@ export class MU extends EventEmitter {
    * or instantiate multiple game functions at startup.
    * @param plugin The file to load at startup.
    */
-  configure(plugin: Plugin) {
-    this.plugins.push(plugin);
+  register(plugin: Plugin) {
+    this._plugins.push(plugin);
   }
 
   /**
@@ -171,6 +170,13 @@ export class MU extends EventEmitter {
    * a potential list of targets.
    */
   send(res: MuRequest) {
+    // Render markdown & a
+    res.payload.message = md.render(
+      res.payload.message
+        ? res.payload.message.replace("\u250D", "(").replace("\u2511", ")")
+        : ""
+    );
+
     // If the request doesn't have an enactor attached, try to get
     // the character information from the socket if it exists.
     if (this.connections.has(res.socket.id) && !res.payload.data.en) {
@@ -196,7 +202,7 @@ export class MU extends EventEmitter {
       } else if (res.payload.data.tar.type === "room") {
         // Else if it's a room, just send to it's id.
 
-        this.io?.to(res.payload.data.tar.id!).send(res.payload);
+        this.io?.to(res.payload.data.tar._id!).send(res.payload);
       }
     } else {
       if (res.payload.data.en) {
@@ -221,18 +227,7 @@ export class MU extends EventEmitter {
       // return the results.
       socket.on("message", async (message: Message) => {
         const payload: Message = message;
-        const res = await parser.process({
-          socket,
-          payload,
-        });
-
-        // Render markdown
-        res.payload.message = md.render(
-          res.payload.message
-            ? res.payload.message.replace("\u250D", "(").replace("\u2511", ")")
-            : ""
-        );
-
+        const res = await parser.process({ socket, payload });
         this.send(res);
       });
 
@@ -262,31 +257,27 @@ export class MU extends EventEmitter {
 
     // Load the default middleware.
     this.middleware(commands, substitutionsMiddleware, msgdataMiddleware);
-    this.service("command", command);
-    this.service("connect", connect);
-    this.service("create", create);
-    this.service("textconnect", textConnect);
+    loadDir("./services");
+    loadText("../text");
 
     // Run plugins.
-    for await (const plugin of this.plugins) {
-      plugin();
+    for await (const plugin of this._plugins) {
+      plugin(this);
     }
 
     // Test for starting room.  If one doesn't exist, create it!
     const limbo = await db.find({ type: "room" });
     // No rooms exist, dig limbo!
     if (limbo.length <= 0) {
-      const id = shortid.generate();
       const created = db.create({
         name: config.game.startingRoom || "Limbo",
         type: "room",
         desc: "You see nothing special.",
-        id,
         attributes: [],
         flags: [],
         contents: [],
-        location: id,
         exits: [],
+        location: config.game.startingRoom || "Limbo",
       });
       if (created)
         console.log(
@@ -321,6 +312,5 @@ export const payload = (req: MuRequest, payload?: Payload): MuRequest => {
   };
 };
 
-export { db, config, parser, cmds, flags };
-
 export default MU.getInstance();
+export { cmds, db, parser, flags, config };

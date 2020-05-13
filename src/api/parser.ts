@@ -113,6 +113,15 @@ export class Parser {
   }
 
   /**
+   * Strip ansi substitutions from a string.
+   * @param string The string to remove the substitution characters from
+   */
+  stripSubs(string: string) {
+    // Remove color codes
+    return string.replace(/%[cCxX]./g, "").replace(/%./g, "");
+  }
+
+  /**
    * Parse a string for syntax
    * @param code
    */
@@ -200,10 +209,7 @@ export class Parser {
    */
   async run(en: DBObj, string: string, scope: Scope) {
     try {
-      string = string
-        .replace(/%[(]/g, "\u250D")
-        .replace(/%[)]/g, "\u2511")
-        .replace(/\[.*\]\(.*\)/g, "");
+      string = string.replace(/%[(]/g, "\u250D").replace(/%[)]/g, "\u2511");
       return await this.evaluate(en, this.parse(string), scope);
     } catch (error) {
       return await this.string(en, string, scope);
@@ -249,9 +255,9 @@ export class Parser {
         // then run it through string again just to make sure.  If /that/ fails
         // error.
         if (end) {
-          let results = await this.run(en, workStr, scope).catch(async () => {
-            output += await this.string(en, workStr, scope).catch(console.log);
-          });
+          let results = await this.run(en, workStr, scope).catch(
+            async (err) => console.error
+          );
           // Add the results to the rest of the processed string.
           output += results;
         }

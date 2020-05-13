@@ -1,4 +1,5 @@
 import { Socket } from "socket.io";
+import { MU } from "./mu";
 
 export type MiddlewareNext = (
   err: Error | null,
@@ -60,7 +61,6 @@ export interface Scope {
 
 export interface DBObj {
   _id?: string;
-  id: string;
   desc: string;
   name: string;
   image?: string;
@@ -98,4 +98,4 @@ export type Message = {
   data: { [key: string]: any };
 };
 
-export type Plugin = () => {};
+export type Plugin = (mu: MU) => {};

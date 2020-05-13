@@ -13,7 +13,7 @@ export default () => {
       if (tar) {
         if (flags.canEdit(en, tar)) {
           tar.desc = args[2];
-          await db.update({ id: tar.id }, tar);
+          await db.update({ _id: tar._id }, tar);
           return payload(req, {
             command: "command",
             message: "Description set.",

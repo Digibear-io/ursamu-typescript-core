@@ -19,7 +19,6 @@ export default () => {
       const newRoom = await db.create({
         name: name.trim(),
         desc: "You see nothing special.",
-        id: shortid.generate(),
         flags: [],
         type: "room",
         location: "",
@@ -38,10 +37,9 @@ export default () => {
           const toExit = await db.create({
             name: toName.trim(),
             desc: "You see nothing special.",
-            id: shortid.generate(),
             flags: [],
             type: "exit",
-            location: curRoom!.id,
+            location: curRoom!._id!,
             contents: [],
             attributes: [],
             exits: [],
@@ -59,8 +57,8 @@ export default () => {
 
             // Add the exit to the current room
             if (curRoom) {
-              curRoom.exits?.push(toExit.id);
-              await db.update({ id: curRoom.id }, curRoom);
+              curRoom.exits?.push(toExit._id!);
+              await db.update({ id: curRoom._id }, curRoom);
             }
 
             // Check for a return exit.
@@ -68,10 +66,9 @@ export default () => {
               const fromExit = await db.create({
                 name: fromName.trim(),
                 desc: "You see nothing special.",
-                id: shortid.generate(),
                 flags: [],
                 type: "exit",
-                location: newRoom.id,
+                location: newRoom._id!,
                 contents: [],
                 attributes: [],
                 exits: [],
@@ -80,8 +77,8 @@ export default () => {
               // If the exit was created, add it to the newRoom
               // exit list.
               if (fromExit) {
-                newRoom.exits?.push(fromExit.id);
-                await db.update({ id: newRoom.id }, newRoom);
+                newRoom.exits?.push(fromExit._id!);
+                await db.update({ id: newRoom._id }, newRoom);
                 output.push(
                   `Exit (**${fromName
                     .split(";")[0]

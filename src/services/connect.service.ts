@@ -74,4 +74,4 @@ const connect = async (req: MuRequest): Promise<MuRequest> => {
   }
 };
 
-export default connect;
+export default mu.service("connect", connect);

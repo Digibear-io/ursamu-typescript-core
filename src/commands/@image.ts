@@ -21,7 +21,7 @@ export default () => {
           }
         }
 
-        await db.update({ id: tar.id }, tar);
+        await db.update({ id: tar._id }, tar);
         return payload(req, { command: "command", message: "Image set." });
       } else {
         return payload(req, {
