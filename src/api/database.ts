@@ -1,6 +1,7 @@
 import DataStore from "nedb";
 import { resolve } from "path";
 import { DbAdapter, DBObj } from "../types";
+import { flags } from "../mu";
 
 export class NeDB<T> implements DbAdapter {
   path?: string;
@@ -119,6 +120,27 @@ export class NeDB<T> implements DbAdapter {
       }
     } else {
       return this.get({ _id: en.location });
+    }
+  }
+
+  /**
+   * Modify name appearance depending on the bit
+   * level of the looker.  If staff or higher, or
+   * owner of the object, they should see the flag
+   * codes associated with the thing/room/exit/etc.
+   * @param en The enactor DBObj
+   * @param tar The target DBObj
+   */
+  name(en: DBObj, tar: DBObj) {
+    let name = tar.name;
+    if (tar.moniker) name = tar.moniker;
+
+    if (flags.canEdit(en, tar)) {
+      return `${name}&lpar;<span style='font-weight: normal'>${flags.codes(
+        tar
+      )}</span>&rpar;`;
+    } else {
+      return name;
     }
   }
 }

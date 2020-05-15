@@ -13,6 +13,7 @@ import cmds, { Cmd } from "./api/commands";
 import config from "./api/config";
 import commands from "./middleware/commands.middleware";
 import flags from "./api/flags";
+import attrs from "./api/attributes";
 import msgdataMiddleware from "./middleware/msgdata.middleware";
 import substitutionsMiddleware from "./middleware/substitutions.middleware";
 import {
@@ -313,4 +314,4 @@ export const payload = (req: MuRequest, payload?: Payload): MuRequest => {
 };
 
 export default MU.getInstance();
-export { cmds, db, parser, flags, config };
+export { cmds, db, parser, flags, config, attrs };

@@ -160,6 +160,16 @@ class Flags {
     return this._bitLvl(en) >= this._bitLvl(tar) ? true : false;
   }
 
+  codes(tar: DBObj) {
+    return (
+      tar.type.charAt(0) +
+      this.flags
+        .filter((flag: Flag) => tar.flags.indexOf(flag.name) != -1)
+        .map((flag: Flag) => flag.code)
+        .join("")
+    );
+  }
+
   static getInstance() {
     if (!Flags.instance) Flags.instance = new Flags();
     return Flags.instance;

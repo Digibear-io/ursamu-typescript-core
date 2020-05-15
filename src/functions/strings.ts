@@ -12,14 +12,15 @@ const repeatString = (string = " ", length: number) => {
   const remainder = Math.floor(length % parser.stripSubs(string).length);
 
   // Split the array and filter out empty cells.
-  let cleanArray = string.split("%").filter(Boolean);
+  let cleanArray = string.split("%");
   // If the array length is longer than 1 (more then one cell), process for ansii
   if (cleanArray.length > 1) {
     // If it's just a clear formatting call 'cn' then we don't need to worry
     // about it.  We'll handle making sure ansii is cleared after each substitution manually.
+
     cleanArray = cleanArray.filter((cell) => {
-      if (cell.toLowerCase() !== "cn") {
-        return cell;
+      if (cell.toLowerCase() !== "cn;") {
+        return "&" + cell;
       }
     });
   } else {

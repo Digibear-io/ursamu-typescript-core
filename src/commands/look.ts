@@ -1,4 +1,4 @@
-import mu, { db, payload, flags } from "../mu";
+import mu, { db, payload, flags, attrs, parser } from "../mu";
 import { DBObj, MuRequest } from "../types";
 
 export interface LookData {
@@ -30,6 +30,7 @@ export default () => {
         exit: [],
       };
 
+      const description = "";
       // TODO:  Move this to grid.ts
       const canSee = (en: DBObj, tar: DBObj) => {
         if (flags.hasFlags(tar, "dark")) {
@@ -70,11 +71,32 @@ export default () => {
             }
           }
 
+          // Either use the object's name, or name format depending
+          // on if it exists, and the looker is within the target.
+          const namefmt = attrs.get(en!, tar, "nameformat");
+          let name = "";
+          if (namefmt && en!.location === tar._id) {
+            name +=
+              (await parser.string(
+                en!,
+                namefmt.value.replace(/</g, "&lt;").replace(/>/g, "&gt;"),
+                {
+                  "%0": db.name(en!, tar!),
+                }
+              )) + "\n";
+          } else {
+            name += db.name(en!, tar) + "\n";
+          }
+          name = parser.colorSub(name);
+
           // Get a list of contents then filter the array for
           // items dark to the enactor before grabbing the name of the
           // object and then sort the array, and then turn it into a string!
-          let contents =
-            tar.type === "player" ? "\n\nCarrying:\n" : "\n\nContents:\n";
+          let contents = "";
+          if (tar.contents.length >= 1) {
+            contents +=
+              tar.type === "player" ? "\n\nCarrying:\n" : "\n\nContents:\n";
+          }
           if (look.player && look.thing) {
             contents += [...look.player, ...look.thing]
               .filter((item) =>
@@ -86,12 +108,12 @@ export default () => {
               .sort()
               .join("\n");
           } else {
-            contents = "";
+            contents = "\n";
           }
 
           return payload(req, {
             command: "desc",
-            message: `_**${tar.name}**_\n\n` + tar.desc + contents,
+            message: `${name}\n` + tar.desc + contents,
             data: { en, tar: en, look },
           });
         } else {

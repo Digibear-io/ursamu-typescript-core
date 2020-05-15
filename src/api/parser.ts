@@ -118,7 +118,32 @@ export class Parser {
    */
   stripSubs(string: string) {
     // Remove color codes
-    return string.replace(/%[cCxX]./g, "").replace(/%./g, "");
+    return string
+      .replace(/%c[\w\d]+;/g, "")
+      .replace(/&lt;/g, " ")
+      .replace(/&gt;/g, " ")
+      .replace(/&lpar;/g, " ")
+      .replace(/&rpar;/g, " ")
+      .replace(/<span.*>/, "")
+      .replace(/<\span>/, "");
+  }
+
+  colorSub(text: string) {
+    return (
+      text
+        .replace(/%[cx]([\w\d]+);/g, "<span style='color: $1'>")
+        .replace(/%[cx]n;/g, "</span>")
+
+        // Backgrounds
+        .replace(/%[CX](.*);/g, "<span style = 'background-color: $1'>")
+
+        .replace(/%b;/g, "<span style = 'font-weight: bold'>")
+
+        // Other substitutions
+        .replace(/%t;/gi, "&nbsp;".repeat(4))
+        .replace(/%b;/gi, "&nbsp;")
+        .replace(/%n;/gi, "</br>")
+    );
   }
 
   /**
@@ -200,22 +225,6 @@ export class Parser {
     }
   }
 
-  /**
-   * Run the parser on the input string.
-   * @param en the enacting DBObj
-   * @param string The string to be run through the parser.
-   * @param scope Any variables, substitutions or special forms
-   * that affect the lifetime of the expression.
-   */
-  async run(en: DBObj, string: string, scope: Scope) {
-    try {
-      string = string.replace(/%[(]/g, "\u250D").replace(/%[)]/g, "\u2511");
-      return await this.evaluate(en, this.parse(string), scope);
-    } catch (error) {
-      return await this.string(en, string, scope);
-    }
-  }
-
   async string(en: DBObj, text: string, scope: Scope) {
     let parens = -1;
     let brackets = -1;
@@ -224,6 +233,11 @@ export class Parser {
     let output = "";
     let start = -1;
     let end = -1;
+
+    // replace out any scoped variables:
+    for (const sub in scope) {
+      text = text.replace(sub, scope[sub]);
+    }
 
     // Loop through the text looking for brackets.
     for (let i = 0; i < text.length; i++) {
@@ -255,9 +269,11 @@ export class Parser {
         // then run it through string again just to make sure.  If /that/ fails
         // error.
         if (end) {
-          let results = await this.run(en, workStr, scope).catch(
-            async (err) => console.error
-          );
+          let results = await this.evaluate(
+            en,
+            this.parse(workStr),
+            scope
+          ).catch(async (err) => (output += workStr));
           // Add the results to the rest of the processed string.
           output += results;
         }

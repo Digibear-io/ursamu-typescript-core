@@ -12,7 +12,7 @@ export default () => {
         socket: req.socket,
         payload: {
           command: "think",
-          message: await parser.run(en!, args[1], {}),
+          message: await parser.string(en!, args[1], {}),
           data: req.payload.data,
         },
       };
