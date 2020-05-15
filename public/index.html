@@ -85,13 +85,15 @@
 
   <script>
     // Declare our variables.
+    const history = [];
+    let histCounter = 0;
     const feed = document.getElementById("feed");
     const socket = io("http://localhost:8090/");
     const input = document.getElementById("input");
 
     // Monitor keypresses.  If the user hits enter, send
     // the message off to the server!
-    input.addEventListener("keypress", (ev) => {
+    input.addEventListener("keydown", (ev) => {
       if (ev.keyCode === 13 && !ev.shiftKey) {
         ev.preventDefault();
         socket.send({
@@ -99,7 +101,34 @@
           message: input.innerText,
           data: {},
         });
+        history.push(input.innerText);
         input.innerText = "";
+      }
+
+      if (ev.ctrlKey) {
+        if (ev.keyCode === 38) {
+          ev.preventDefault();
+
+          // Move back through history.
+          // if the history counter reaches the start of ths history
+          // start over at the end.
+          if (histCounter - 1 < 0) histCounter = history.length;
+
+          histCounter--;
+          // Else display the previous history.
+          input.innerText = history[histCounter];
+        } else if (ev.keyCode === 40) {
+          ev.preventDefault();
+
+          // Move back through history.
+          // if the history counter reaches the start of ths history
+          // start over at the end.
+          if (histCounter + 1 > history.length - 1) histCounter = -1;
+
+          histCounter++;
+          // Else display the previous history.
+          input.innerText = history[histCounter];
+        }
       }
     });
 
