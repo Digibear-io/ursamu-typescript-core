@@ -30,7 +30,7 @@
     #container {
       display: flex;
       height: 95vh;
-      max-width: 800px;
+      max-width: 780px;
       margin-left: auto;
       margin-right: auto;
       box-sizing: border-box;
@@ -132,6 +132,13 @@
       }
     });
 
+    const post = (msg, para = false) => {
+      const li = document.createElement("li");
+      li.className = "item";
+      li.innerHTML = para ? `<p>${msg}</p>` : msg;
+      feed.appendChild(li);
+    };
+
     // When the socket connects, let the server know we need
     // the login screen.
     socket.on("connect", () => {
@@ -140,6 +147,12 @@
         message: "",
         data: {},
       });
+    });
+    socket.on("reconnect", () => {
+      post("You have reconnected...", true);
+    });
+    socket.on("reconnecting", () => {
+      post("Reconnecting to game, please hold...", true);
     });
 
     // When a new message comes in, add it to the feed.

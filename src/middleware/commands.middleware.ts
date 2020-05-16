@@ -30,7 +30,7 @@ export default async (req: MuRequest, next: MiddlewareNext) => {
     req.payload.message = "";
     return next(
       null,
-      payload(req, { message: "", data: { matched: matched ? true : false } })
+      payload(req, { data: { matched: matched ? true : false } })
     );
   }
 

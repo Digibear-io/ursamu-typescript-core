@@ -229,7 +229,19 @@ export class MU extends EventEmitter {
       socket.on("message", async (message: Message) => {
         const payload: Message = message;
         const res = await parser.process({ socket, payload });
-        this.send(res);
+
+        // If the request was matched in the pipeline, send a response.
+        // else if no match, send 'huh' message, if socket is logged in.
+        // nothing for unverifified sockets!
+        if (res.payload.data.matched) {
+          this.send(res);
+        } else if (this.connections.has(res.socket.id)) {
+          res.payload.message = "Huh? Type '**help**' for help.";
+          this.send(res);
+        } else {
+          res.payload.message = "";
+          this.send(res);
+        }
       });
 
       // When a socket disconnects rem ove the connected
