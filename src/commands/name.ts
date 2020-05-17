@@ -5,7 +5,7 @@ export default () => {
   cmds.add({
     name: "@name",
     flags: "connected",
-    pattern: /[@\+]?name\s+?(\w+)\s?=\s?(\w+)/i,
+    pattern: /[@\+]?name\s+?(.*)\s?=\s?(.*)/i,
     exec: async (req: MuRequest, args: string[]) => {
       const en = mu.connections.get(req.socket.id) as DBObj;
       const tar = await db.target(en, args[1]);

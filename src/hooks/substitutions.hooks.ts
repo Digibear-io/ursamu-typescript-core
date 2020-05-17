@@ -1,7 +1,7 @@
 import { payload } from "../mu";
 import { MuRequest } from "../types";
 
-export default (req: MuRequest): MuRequest => {
+export default async (req: MuRequest): Promise<MuRequest> => {
   const message = req.payload.message
     .replace(/%[cx]([\w\d]+);/g, "<span style='color: $1'>")
     .replace(/%[cx]n;/g, "</span>")

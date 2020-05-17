@@ -53,7 +53,9 @@ export interface Expression {
   args: Array<Expression>;
 }
 
-export type Service = (req: MuRequest) => Promise<MuRequest>;
+export type MuService = (req: MuRequest) => Promise<MuRequest>;
+
+export type MuHook = (req: MuRequest) => Promise<MuRequest>;
 
 export interface Scope {
   [key: string]: any;

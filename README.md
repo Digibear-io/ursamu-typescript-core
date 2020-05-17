@@ -15,14 +15,15 @@
 [Flags](#flags)<br>
 [Softcode Commands](#commands)<br>
 [Mushcode Functions](#functions)<br>
-[Middleware](#middleware)<br>
-[Configure](#configure)<br>
+[Services](#Services)<br>
+[Hooks](#hooks)<br>
+[Plugins](#plugins)<br>
 [License](#license)<br>
 [Feature Roadmap](#feature-roadmap)
 
 ## Installation
 
-`npm i @ursamu/core`
+`coming soon!` UrsaMU isn't stable enough for testing yet! :)
 
 ## Basic Usage
 
@@ -142,6 +143,31 @@ parser.add("add", (en: DBObj, args: string[], scope: Scope) => {
     .reduce((prev: number, curr: number) => prev += curr, 0);
 })
 ```
+
+## Services
+
+Services are their core, a handler for various commands send from the client, to the server, IE player input (messages), auth requests, character creation, connection, etc. A Service takes in a `MuRequest`, and returns a new `MuRequest`.
+
+```JavaScript
+  import { Services, payload } from "@ursamu/core";
+  import { MuRequest } from "@ursamu/core/types";
+
+  // Create a new service handler.  When the client sends a
+  // reuquest sith the command: "somename", this handler will activate.
+  service.add("somename", (req: MuRequest) => {
+    // Send a response back to the client ...
+
+   // ... something with the req object here.
+
+    return payload(req, {
+        data: {
+          results: { foo: "bar" }
+        }
+      })
+  })
+```
+
+## Hooks
 
 ## Middleware
 

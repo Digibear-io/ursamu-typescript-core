@@ -11,16 +11,14 @@ import parser from "./api/parser";
 import md from "./api/md";
 import cmds, { Cmd } from "./api/commands";
 import config from "./api/config";
-import commands from "./middleware/commands.middleware";
 import flags from "./api/flags";
 import attrs from "./api/attributes";
-import msgdataMiddleware from "./middleware/msgdata.middleware";
-import substitutionsMiddleware from "./middleware/substitutions.middleware";
+import services from "./api/services";
+
 import {
   DBObj,
-  MiddlewareLayer,
   MuFunction,
-  Service,
+  MuService,
   Message,
   MuRequest,
   Plugin,
@@ -38,7 +36,7 @@ export class MU extends EventEmitter {
   private static instance: MU;
   connections: Map<string, DBObj>;
   private _plugins: Plugin[];
-  private _services: Map<string, Service>;
+  private _services: Map<string, MuService>;
   text: Map<string, string>;
 
   private constructor() {
@@ -134,16 +132,6 @@ export class MU extends EventEmitter {
   }
 
   /**
-   * Load a middleware function to run against user
-   * input via the parser.
-   * @param middleware The middleware layer to add to the
-   * pipeline.
-   */
-  middleware(...middleware: MiddlewareLayer[]) {
-    middleware.forEach((middleware) => parser.use(middleware));
-  }
-
-  /**
    * Add an in-game command to the system.
    * @param cmd Facade for adding new commands to the
    * mu server.
@@ -161,8 +149,13 @@ export class MU extends EventEmitter {
     parser.add(name, func);
   }
 
-  service(name: string, service: Service) {
-    parser.service(name, service);
+  /**
+   * Add a new service to the system.
+   * @param name The name of the service
+   * @param service The service to be added to the system
+   */
+  service(name: string, service: MuService) {
+    services.register(name, service);
   }
 
   /**
@@ -269,7 +262,6 @@ export class MU extends EventEmitter {
     });
 
     // Load the default middleware.
-    this.middleware(commands, substitutionsMiddleware, msgdataMiddleware);
     loadDir("./services");
     loadText("../text");
 

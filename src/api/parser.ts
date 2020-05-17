@@ -2,11 +2,12 @@ import peg from "pegjs";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 import { loadDir } from "../utils";
+import services from "./services";
 import { payload } from "../mu";
 import {
   MiddlewareLayer,
   MuFunction,
-  Service,
+  MuService,
   MuRequest,
   DBObj,
   Expression,
@@ -19,7 +20,7 @@ export class Parser {
   private peg: any;
   private parser: peg.Parser;
   private fns: Map<string, MuFunction>;
-  private services: Map<string, Service>;
+  private services: Map<string, MuService>;
 
   private constructor() {
     this.stack = [];
@@ -41,75 +42,16 @@ export class Parser {
   }
 
   /**
-   * Add a service to execute different serverside
-   * commands from the client, and not player input.
-   * Things like: message processing, connecting,
-   * disconnecting, character creation, etc.
-   * @param name The name of the service to add.
-   * @param service The actual service to perform and
-   * return.
-   */
-  service(name: string, service: Service) {
-    this.services.set(name, service);
-  }
-
-  /**
    * Process a request object frin tge ckuebt
    * @param req The request object.
    */
   async process(req: MuRequest): Promise<MuRequest> {
     const command = req.payload.command.toLowerCase();
-
-    if (this.services.has(command)) {
-      return this.services.get(command)!(req);
-    } else if (command === "message") {
-      return this._handle(req);
+    if (services.has(command)) {
+      return services.get(command)!.exec(req);
     } else {
-      return payload(req, { command: "message" });
+      return payload(req, { command: "error", message: "Service not found" });
     }
-  }
-
-  /**
-   * Add a new middleware to text input stack.
-   * @param layer The layer to add to the middleware stack.
-   */
-  use(layer: MiddlewareLayer) {
-    this.stack.push(layer);
-  }
-
-  /**
-   * Run a string through a series of middleware.
-   * @param data The string to be pushed through the pipeline.
-   */
-  private async _handle(req: MuRequest): Promise<MuRequest> {
-    let idx = 0;
-
-    /**
-     * Recursive function to walk through each piece of
-     * middleware in the stack.
-     * @param err Any possible errors hit by the middleware.
-     * @param data The string the middleware pipeline is going
-     * to be working with
-     */
-    const next = async (
-      err: Error | null,
-      req: MuRequest
-    ): Promise<MuRequest> => {
-      // Return early if there's an error, or if we've processed through
-      // the entire stack.
-      if (err != null) return Promise.reject(err);
-      if (idx === this.stack.length) {
-        return Promise.resolve(req);
-      }
-
-      // Grab a new layer from the stack
-      const layer = this.stack[idx++];
-      // Run the layer
-      return await layer(req, next);
-    };
-
-    // Return the modified data.
-    return await next(null, req).catch((err: Error) => next(err, req));
   }
 
   /**
