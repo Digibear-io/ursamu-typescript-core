@@ -29,9 +29,9 @@ export class Attributes {
     const attr = this.get(en, tar, attribute);
     if (flags.canEdit(en, tar)) {
       if (attr) {
-        // Existing attribute
         attr.value = value;
         attr.lastEdit = en._id!;
+
         // set the attribute, and clear any attrs with empy values.
         tar.attributes.push(attr);
         tar.attributes.filter((attr) => (attr.value ? true : false));

@@ -38,7 +38,7 @@ const connect = async (req: MuRequest): Promise<MuRequest> => {
         if (players[0].flags.indexOf("connected") !== -1) {
           return payload(req, {
             command: "reconnect",
-            message: "",
+            message: "Reconnected....",
             data: { en: players[0], tar: players[0] },
           });
         } else {

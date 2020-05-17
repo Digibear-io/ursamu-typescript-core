@@ -36,7 +36,6 @@ export class MU extends EventEmitter {
   private static instance: MU;
   connections: Map<string, DBObj>;
   private _plugins: Plugin[];
-  private _services: Map<string, MuService>;
   text: Map<string, string>;
 
   private constructor() {
@@ -45,7 +44,6 @@ export class MU extends EventEmitter {
     this.http;
     this.connections = new Map();
     this._plugins = [];
-    this._services = new Map();
     this.text = new Map();
   }
 

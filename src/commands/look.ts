@@ -1,5 +1,6 @@
 import mu, { db, payload, flags, attrs, parser } from "../mu";
 import { DBObj, MuRequest } from "../types";
+import { Client } from "socket.io";
 
 export interface LookData {
   [index: string]: any;
@@ -58,62 +59,51 @@ export default () => {
       const en = mu.connections.get(req.socket.id);
       const tar = await db.target(en!, args[1]);
 
+      // Promisify Socket.io's clients by room listing.
+      const clients = (room: string): Promise<string[]> =>
+        new Promise((resolve: any, reject: any) =>
+          mu.io?.to(room).clients((err: Error, clients: string[]) => {
+            if (err) reject(err);
+            resolve(clients);
+          })
+        );
+
       if (tar) {
         if (canSee(en!, tar)) {
-          look.en = en;
-          look.tar = tar;
-
-          // collect DBObj types ...
-          for (const item of tar.contents) {
-            const obj = await db.get({ _id: item });
-            if (obj && obj.type) {
-              look[obj.type].push(obj);
-            }
-          }
-
           // Either use the object's name, or name format depending
           // on if it exists, and the looker is within the target.
           const namefmt = attrs.get(en!, tar, "nameformat");
           let name = "";
           if (namefmt && en!.location === tar._id) {
-            name +=
-              (await parser.string(
-                en!,
-                namefmt.value.replace(/</g, "&lt;").replace(/>/g, "&gt;"),
-                {
-                  "%0": db.name(en!, tar!),
-                }
-              )) + "\n";
+            name += await parser.string(
+              en!,
+              namefmt.value.replace(/</g, "&lt;").replace(/>/g, "&gt;"),
+              {
+                "%0": db.name(en!, tar!),
+              }
+            );
           } else {
             name += db.name(en!, tar) + "\n";
           }
           name = parser.colorSub(name);
 
-          // Get a list of contents then filter the array for
-          // items dark to the enactor before grabbing the name of the
-          // object and then sort the array, and then turn it into a string!
-          let contents = "";
-          if (tar.contents.length >= 1) {
-            contents +=
-              tar.type === "player" ? "\n\nCarrying:\n" : "\n\nContents:\n";
-          }
-          if (look.player && look.thing) {
-            contents += [...look.player, ...look.thing]
-              .filter((item) =>
-                flags.hasFlags(item, "!dark") || flags.canEdit(en!, item)
-                  ? true
-                  : false
-              )
-              .map((item) => item.name)
-              .sort()
-              .join("\n");
-          } else {
-            contents = "\n";
+          let contents = "\n\n";
+
+          // if target is a room, get it's players.
+          if (tar.type === "room") {
+            const players = (await clients(tar._id!))
+              .map((client) => mu.connections.get(client) as DBObj)
+              .map((obj) => (canSee(en!, obj) ? db.name(en!, obj) : false))
+              .filter(Boolean);
+
+            if (players.length > 0) {
+              contents += "Contents:\n" + players.join("\n");
+            }
           }
 
           return payload(req, {
             command: "desc",
-            message: `${name}\n` + tar.desc + contents,
+            message: `${name}` + tar.desc + contents,
             data: { en, tar: en, look },
           });
         } else {

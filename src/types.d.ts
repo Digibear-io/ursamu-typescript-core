@@ -67,7 +67,7 @@ export interface DBObj {
   name: string;
   image?: string;
   avatar?: string;
-  caption?: string;
+  title?: string;
   moniker?: string;
   type: "thing" | "player" | "room" | "exit";
   alias?: string;
