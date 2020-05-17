@@ -169,25 +169,18 @@ Services are their core, a handler for various commands send from the client, to
 
 ## Hooks
 
-## Middleware
-
-All input from the game passes through a series of middleware to modify an incoming message before the results of the string are returned. **UrsaMU** ships with a `command`, and `movement` parsing middlewares, but the system is infinitely extendable.
+Hooks are reusable pieces of code, that can be executed on multiple services. They can run before or after a service.
 
 ```JavaScript
-import mu, { MuRequest, Next } from "@ursamu/core";
+  // From our example above, we can extend it with a couple of hooks..
+  // This hook updates the message of the request object before returning it
+  service.get("somename").hook("before", async (req: MuRequest) =>
+    payload(req, {
+      message: "This came from the hook!",
+    })
+  )
 
-// Add a new middleware to the message pipeline
-mu.use((req: MuRequest, Next: Next) => {
-  // Add some data to the request object.  This data will
-  // be attached to the request object for the rest of it's
-  // lifecycle.
-
-  req.payload.data.created = Date.now();
-  return next(null, req);
-})
 ```
-
-- `Next(err: Error | null, data: MuRequest)` At the end of every middleware, you must return the `next` function, or your middleware chain will hang indefinitely.
 
 ## License
 
