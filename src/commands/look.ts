@@ -87,19 +87,33 @@ export default () => {
           }
           name = parser.colorSub(name);
 
+          // Either use the object's contents, or  conformat depending
+          // on if it exists, and the looker is within the target.
+          const confmt = attrs.get(en!, tar, "conformat");
+
+          // players if the object has any.
+          const players = (await clients(tar._id!))
+            .map((client) => mu.connections.get(client) as DBObj)
+            .map((obj) => (canSee(en!, obj) ? db.name(en!, obj) : false))
+            .filter(Boolean);
+
           let contents = "\n\n";
 
-          // if target is a room, get it's players.
-          if (tar.type === "room") {
-            const players = (await clients(tar._id!))
-              .map((client) => mu.connections.get(client) as DBObj)
-              .map((obj) => (canSee(en!, obj) ? db.name(en!, obj) : false))
-              .filter(Boolean);
-
-            if (players.length > 0) {
-              contents += "Contents:\n" + players.join("\n");
+          if (confmt) {
+            contents = await parser.string(en!, confmt.value, {
+              "%0": players,
+            });
+          } else {
+            // if target is a room, get it's players.
+            if (tar.type === "room") {
+              if (players.length > 0) {
+                contents += "Contents:\n" + players.join("\n");
+              }
             }
           }
+
+          // Substitute out color code for html markup.
+          contents = parser.colorSub(contents);
 
           return payload(req, {
             command: "desc",

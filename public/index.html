@@ -145,22 +145,27 @@
       socket.send({
         command: "textconnect",
         message: "",
-        data: {},
+        data: { token: window.sessionStorage.getItem("token") || "" },
       });
     });
+
     socket.on("reconnect", () => {
-      post("You have reconnected...", true);
-    });
-    socket.on("reconnecting", () => {
-      post("Reconnecting to game, please hold...", true);
+      post("Reconnecting...", true);
     });
 
     // When a new message comes in, add it to the feed.
     socket.on("message", (res) => {
-      const li = document.createElement("li");
-      li.className = "item";
-      li.innerHTML = res.message;
-      feed.appendChild(li);
+      switch (res.command) {
+        case "connected":
+          console.log("connected", res);
+          window.sessionStorage.setItem("token", res.data.token);
+        default:
+          console.log(res);
+          const li = document.createElement("li");
+          li.className = "item";
+          li.innerHTML = res.message;
+          feed.appendChild(li);
+      }
     });
   </script>
 </html>

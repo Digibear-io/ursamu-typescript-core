@@ -58,3 +58,47 @@ parser.add("center", async (en: DBObj, args: string[], scope: Scope) => {
     }
   }
 });
+
+// ljust
+parser.add("ljust", async (en: DBObj, args: string[], scope: Scope) => {
+  if (args.length < 2) {
+    throw new SyntaxError("ljust requires at least 2 arguments");
+  } else {
+    const message = args[0];
+    const width = parseInt(args[1], 10);
+    const repeat = args[2] ? args[2] : " ";
+
+    // Check to see if the second arg is an integer
+    if (Number.isInteger(width)) {
+      // run the substitutions so I can strip away the ansi non-printables
+      // while still retaining any spaces around the message.
+      const length = width - parser.stripSubs(message).length;
+
+      return message + repeatString(repeat, length);
+    } else {
+      throw new SyntaxError("ljust expects length as a number.");
+    }
+  }
+});
+
+// rjust
+parser.add("rjust", async (en: DBObj, args: string[], scope: Scope) => {
+  if (args.length < 2) {
+    throw new SyntaxError("rjust requires at least 2 arguments");
+  } else {
+    const message = args[0];
+    const width = parseInt(args[1], 10);
+    const repeat = args[2] ? args[2] : " ";
+
+    // Check to see if the second arg is an integer
+    if (Number.isInteger(width)) {
+      // run the substitutions so I can strip away the ansi non-printables
+      // while still retaining any spaces around the message.
+      const length = width - parser.stripSubs(message).length;
+
+      return repeatString(repeat, length) + message;
+    } else {
+      throw new SyntaxError("rjust expects length as a number.");
+    }
+  }
+});

@@ -84,7 +84,7 @@ export class Parser {
         // Other substitutions
         .replace(/%t;/gi, "&nbsp;".repeat(4))
         .replace(/%b;/gi, "&nbsp;")
-        .replace(/%n;/gi, "</br>")
+        .replace(/%r;/gi, "</br>")
     );
   }
 

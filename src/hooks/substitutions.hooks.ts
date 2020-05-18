@@ -14,7 +14,7 @@ export default async (req: MuRequest): Promise<MuRequest> => {
     // Other substitutions
     .replace(/%t;/gi, "&nbsp;".repeat(4))
     .replace(/%b;/gi, "&nbsp;")
-    .replace(/%n;/gi, "</br>");
+    .replace(/%r;/gi, "</br>");
 
   return payload(req, { message });
 };

@@ -1,6 +1,7 @@
-import mu, { payload, flags, db } from "../mu";
+import mu, { payload, flags, db, cmds } from "../mu";
 import { sha512 } from "js-sha512";
-import { MuRequest } from "../types";
+import { MuRequest, DBObj } from "../types";
+import jwt from "jsonwebtoken";
 
 /**
  * Handle a socket connecting to the server.
@@ -8,6 +9,8 @@ import { MuRequest } from "../types";
 const connect = async (req: MuRequest): Promise<MuRequest> => {
   const { user, password } = req.payload.data;
 
+  // If they have a valid JWT bypass the login process and drop the character
+  // back into the action!
   if (user && password) {
     // Find the player DBObj
     const players = await db
@@ -33,25 +36,33 @@ const connect = async (req: MuRequest): Promise<MuRequest> => {
         mu.connections.set(req.socket.id, players[0]);
         req.socket.join(players[0].location);
 
-        // If the character isn't already seen as connected, don't bother
-        // making them look at their location again.
-        if (players[0].flags.indexOf("connected") !== -1) {
-          return payload(req, {
-            command: "reconnect",
-            message: "Reconnected....",
-            data: { en: players[0], tar: players[0] },
-          });
-        } else {
-          await flags.setFlag(players[0], "connected");
-          return payload(req, {
+        const token = jwt.sign(players[0]._id!, "secret");
+
+        await flags.setFlag(players[0], "connected");
+        mu.send(
+          payload(req, {
             command: "connected",
             message: "Welcome to UrsaMU",
             data: {
               en: players[0],
               tar: players[0],
+              token,
             },
-          });
-        }
+          })
+        );
+        mu.send(await cmds.force(req, "look"));
+
+        return {
+          socket: req.socket,
+          payload: {
+            command: "text",
+            message: "",
+            data: {
+              en: players[0],
+              tar: players[0],
+            },
+          },
+        };
       } else {
         return payload(req, {
           command: "error",

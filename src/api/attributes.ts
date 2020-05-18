@@ -25,26 +25,22 @@ export class Attributes {
    * @param value The value to set the attribute.
    */
   async set(en: DBObj, tar: DBObj, attribute: string, value: string = "") {
-    const attrSet = new Set(tar.attributes);
     const attr = this.get(en, tar, attribute);
     if (flags.canEdit(en, tar)) {
       if (attr) {
         attr.value = value;
         attr.lastEdit = en._id!;
-
-        // set the attribute, and clear any attrs with empy values.
-        tar.attributes.push(attr);
+        tar.attributes.splice(tar.attributes.indexOf(attr), 1, attr);
         tar.attributes.filter((attr) => (attr.value ? true : false));
         await db.update({ _id: tar._id }, tar);
       } else {
         // new attribute
         if (value) {
-          attrSet.add({
+          tar.attributes.push({
             name: attribute,
             value,
             lastEdit: en._id!,
           });
-          tar.attributes = Array.from(attrSet);
           await db.update({ _id: tar._id }, tar);
         }
       }
