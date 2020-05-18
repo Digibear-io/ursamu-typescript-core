@@ -1,5 +1,6 @@
-import { parser } from "../mu";
-import { DBObj, Scope } from "../types";
+import { parser, db } from "../mu";
+import { DBObj, Scope, Expression } from "../types";
+import { hydrate } from "../utils";
 
 // In order to keep things DRY, creating a function expression to render filler strings.
 const repeatString = (string = " ", length: number) => {
@@ -33,13 +34,14 @@ const repeatString = (string = " ", length: number) => {
 };
 
 // Center text.
-parser.add("center", async (en: DBObj, args: string[], scope: Scope) => {
+parser.add("center", async (en: DBObj, args: Expression[], scope: Scope) => {
   if (args.length < 2) {
     throw new SyntaxError("center requires at least 2 arguments");
   } else {
-    const message = args[0];
-    const width = parseInt(args[1], 10);
-    const repeat = args[2] ? args[2] : " ";
+    const arg = await hydrate(en, scope, ...args);
+    const message = arg[0];
+    const width = parseInt(arg[1], 10);
+    const repeat = arg[2] ? arg[2] : " ";
 
     // Check to see if the second arg is an integer
     if (Number.isInteger(width)) {
@@ -51,7 +53,7 @@ parser.add("center", async (en: DBObj, args: string[], scope: Scope) => {
       return (
         repeatString(repeat, length) +
         message +
-        repeatString(repeat, length + remainder)
+        repeatString(repeat, length + remainder).replace(/\s/g, "&nbsp;")
       );
     } else {
       throw new SyntaxError("center expects length as a number.");
@@ -60,13 +62,14 @@ parser.add("center", async (en: DBObj, args: string[], scope: Scope) => {
 });
 
 // ljust
-parser.add("ljust", async (en: DBObj, args: string[], scope: Scope) => {
+parser.add("ljust", async (en: DBObj, args: Expression[], scope: Scope) => {
   if (args.length < 2) {
     throw new SyntaxError("ljust requires at least 2 arguments");
   } else {
-    const message = args[0];
-    const width = parseInt(args[1], 10);
-    const repeat = args[2] ? args[2] : " ";
+    const arg = await hydrate(en, scope, ...args);
+    const message = arg[0];
+    const width = parseInt(arg[1], 10);
+    const repeat = arg[2] ? arg[2] : " ";
 
     // Check to see if the second arg is an integer
     if (Number.isInteger(width)) {
@@ -74,7 +77,12 @@ parser.add("ljust", async (en: DBObj, args: string[], scope: Scope) => {
       // while still retaining any spaces around the message.
       const length = width - parser.stripSubs(message).length;
 
-      return message + repeatString(repeat, length);
+      return (
+        message +
+        repeatString(repeat, length)
+          .replace(/\s/g, "&nbsp;")
+          .replace(/\s/g, "&nbsp;")
+      );
     } else {
       throw new SyntaxError("ljust expects length as a number.");
     }
@@ -82,13 +90,14 @@ parser.add("ljust", async (en: DBObj, args: string[], scope: Scope) => {
 });
 
 // rjust
-parser.add("rjust", async (en: DBObj, args: string[], scope: Scope) => {
+parser.add("rjust", async (en: DBObj, args: Expression[], scope: Scope) => {
   if (args.length < 2) {
     throw new SyntaxError("rjust requires at least 2 arguments");
   } else {
-    const message = args[0];
-    const width = parseInt(args[1], 10);
-    const repeat = args[2] ? args[2] : " ";
+    const arg = await hydrate(en, scope, ...args);
+    const message = arg[0];
+    const width = parseInt(arg[1], 10);
+    const repeat = arg[2] ? arg[2] : " ";
 
     // Check to see if the second arg is an integer
     if (Number.isInteger(width)) {
@@ -96,9 +105,26 @@ parser.add("rjust", async (en: DBObj, args: string[], scope: Scope) => {
       // while still retaining any spaces around the message.
       const length = width - parser.stripSubs(message).length;
 
-      return repeatString(repeat, length) + message;
+      return repeatString(repeat, length) + message.replace(/\s/g, "&nbsp;");
     } else {
       throw new SyntaxError("rjust expects length as a number.");
     }
+  }
+});
+
+// repeat
+parser.add("repeat", async (en: DBObj, args: Expression[], scope: Scope) => {
+  const repeat = parseInt(await parser.evaluate(en, args[1], scope), 10);
+  const arg = await hydrate(en, scope, ...args);
+  return arg[0].repeat(repeat).replace(/\s/g, "&nbsp;");
+});
+
+// Name
+parser.add("name", async (en: DBObj, args: Expression[], scope: Scope) => {
+  const tar = await db.get({ _id: await parser.evaluate(en, args[0], scope) });
+  if (tar) {
+    return db.name(en, tar);
+  } else {
+    return "#-1";
   }
 });

@@ -97,11 +97,17 @@ export default () => {
             .map((obj) => (canSee(en!, obj) ? db.name(en!, obj) : false))
             .filter(Boolean);
 
+          const IDs = (await clients(tar._id!))
+            .map((client) => mu.connections.get(client) as DBObj)
+            .map((obj) => (canSee(en!, obj) ? obj._id : false))
+            .filter(Boolean)
+            .join(" ");
+
           let contents = "\n\n";
 
           if (confmt) {
             contents = await parser.string(en!, confmt.value, {
-              "%0": players,
+              "%0": IDs,
             });
           } else {
             // if target is a room, get it's players.
@@ -117,7 +123,7 @@ export default () => {
 
           return payload(req, {
             command: "desc",
-            message: `${name}` + tar.desc + contents,
+            message: `${name}` + tar.desc + "\n" + contents,
             data: { en, tar: en, look },
           });
         } else {

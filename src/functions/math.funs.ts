@@ -1,5 +1,6 @@
 import parser from "../api/parser";
-import { DBObj, Scope } from "../types";
+import { DBObj, Scope, Expression } from "../types";
+import { hydrate } from "../utils";
 
 export default () => {
   // MATHS!
@@ -7,10 +8,10 @@ export default () => {
   /**
    * Add a list of numbers together!
    */
-  parser.add("add", async (en: DBObj, args: string[], scope: Scope) => {
-    let total = 0;
-    return args
-      .map((arg) => parseInt(arg, 10))
+  parser.add("add", async (en: DBObj, args: Expression[], scope: Scope) => {
+    const arg = await hydrate(en, scope, ...args);
+    return arg
+      .map((ar) => parseInt(ar, 10))
       .reduce((p: number, c: number) => (p += c), 0)
       .toString();
   });

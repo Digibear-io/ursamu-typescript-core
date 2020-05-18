@@ -26,7 +26,7 @@ export interface MuRequest {
 
 export type MuFunction = (
   enactor: DBObj,
-  args: string[],
+  args: Expression[],
   scope: Scope
 ) => Promise<any>;
 

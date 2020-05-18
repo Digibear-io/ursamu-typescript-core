@@ -149,18 +149,21 @@ export class Parser {
             args.push(await this.evaluate(en, arg, scope));
           }
 
-          return await func(en, args, scope);
+          return await func(en, expr.args, scope);
         }
+      } else {
+        throw new Error("Unknown function.");
       }
 
       // If it's a list (operations seperated by square brackets)
       // Process each item in the list.
     } else if (expr.type === "list") {
-      let output;
-      for (let i = 0; i < expr.value!.length; i++) {
-        output += await this.evaluate(en, expr.list![i], scope);
-      }
-      return output;
+      return expr.list;
+      // let output;
+      // for (let i = 0; i < expr.list!.length; i++) {
+      //   output += await this.evaluate(en, expr.list![i], scope);
+      // }
+      // return output;
       // Else throw an error, unknown operation!
     } else {
       throw new Error("Unknown Expression.");
@@ -173,7 +176,6 @@ export class Parser {
     let match = false;
     let workStr = "";
     let output = "";
-    let start = -1;
     let end = -1;
 
     // replace out any scoped variables:
@@ -185,7 +187,6 @@ export class Parser {
     for (let i = 0; i < text.length; i++) {
       if (text[i] === "[") {
         brackets = brackets > 0 ? brackets + 1 : 1;
-        start = start > 0 ? start : i;
         match = true;
       } else if (text[i] === "]") {
         brackets = brackets - 1;
@@ -215,7 +216,7 @@ export class Parser {
             en,
             this.parse(workStr),
             scope
-          ).catch(async (err) => (output += workStr));
+          ).catch((err) => workStr);
           // Add the results to the rest of the processed string.
           output += results;
         }
@@ -224,7 +225,7 @@ export class Parser {
         parens = -1;
         brackets = -1;
         match = false;
-        start = -1;
+        workStr = "";
         end = -1;
       } else {
         // If stray paren or bracket slips through, add it to `workStr`
