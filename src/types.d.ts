@@ -63,12 +63,8 @@ export interface Scope {
 
 export interface DBObj {
   _id?: string;
-  desc: string;
   name: string;
-  image?: string;
-  avatar?: string;
-  title?: string;
-  moniker?: string;
+  dbref: number;
   type: "thing" | "player" | "room" | "exit";
   alias?: string;
   password?: string;

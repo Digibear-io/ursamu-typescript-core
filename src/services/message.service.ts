@@ -1,7 +1,7 @@
 import { MuRequest } from "../types";
 import services from "../api/services";
 import commandsHook from "../hooks/commands.hook";
-import substitutionsHooks from "../hooks/substitutions.hooks";
+import substitutionsHooks from "../hooks/substitutions.hook";
 import msgdataHook from "../hooks/msgdata.hook";
 
 export default () => {

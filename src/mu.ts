@@ -6,7 +6,7 @@ import {
   IncomingMessage,
 } from "http";
 import { EventEmitter } from "events";
-import db from "./api/database";
+import db, { dbref } from "./api/database";
 import parser from "./api/parser";
 import md from "./api/md";
 import cmds, { Cmd } from "./api/commands";
@@ -274,8 +274,8 @@ export class MU extends EventEmitter {
     if (limbo.length <= 0) {
       const created = db.create({
         name: config.game.startingRoom || "Limbo",
+        dbref: await dbref(),
         type: "room",
-        desc: "You see nothing special.",
         attributes: [],
         flags: [],
         contents: [],
@@ -316,4 +316,4 @@ export const payload = (req: MuRequest, payload?: Payload): MuRequest => {
 };
 
 export default MU.getInstance();
-export { cmds, db, parser, flags, config, attrs };
+export { cmds, db, parser, flags, config, attrs, dbref };

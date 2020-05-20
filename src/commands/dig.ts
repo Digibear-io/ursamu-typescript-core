@@ -1,6 +1,7 @@
-import mu, { db, payload } from "../mu";
+import mu, { db, payload, parser } from "../mu";
 import shortid from "shortid";
 import { MuRequest, DBObj } from "../types";
+import { dbref } from "../api/database";
 
 export default () => {
   mu.cmd({
@@ -13,12 +14,12 @@ export default () => {
       let toName, fromName;
       if (exits) [toName, fromName] = exits.split(",");
       const output: string[] = [];
-      const curRoom = await db.get({ id: en.location });
+      const curRoom = await db.get({ _id: en.location });
 
       // Create the new room
       const newRoom = await db.create({
         name: name.trim(),
-        desc: "You see nothing special.",
+        dbref: await dbref(),
         flags: [],
         type: "room",
         location: "",
@@ -29,14 +30,14 @@ export default () => {
 
       // If the new room exists
       if (newRoom) {
-        output.push(`Room (**${name.trim()}**) dug.`);
+        output.push(`Room (**${parser.colorSub(name.trim())}**) dug.`);
 
         // If a to exit was given, dig th exit and link it to the
         // enactors current location.
         if (toName) {
           const toExit = await db.create({
             name: toName.trim(),
-            desc: "You see nothing special.",
+            dbref: await dbref(),
             flags: [],
             type: "exit",
             location: curRoom!._id!,
@@ -50,22 +51,24 @@ export default () => {
           // exit.
           if (toExit) {
             output.push(
-              `Exit (**${toName
-                .split(";")[0]
-                .trim()}**) opened to **${newRoom.name.trim()}**`
+              `Exit (**${parser
+                .colorSub(toName.split(";")[0])
+                .trim()}**) opened to **${parser.colorSub(
+                newRoom.name.trim()
+              )}**`
             );
 
             // Add the exit to the current room
             if (curRoom) {
               curRoom.exits?.push(toExit._id!);
-              await db.update({ id: curRoom._id }, curRoom);
+              await db.update({ _id: curRoom._id }, curRoom);
             }
 
             // Check for a return exit.
             if (fromName) {
               const fromExit = await db.create({
                 name: fromName.trim(),
-                desc: "You see nothing special.",
+                dbref: await dbref(),
                 flags: [],
                 type: "exit",
                 location: newRoom._id!,
@@ -78,11 +81,13 @@ export default () => {
               // exit list.
               if (fromExit) {
                 newRoom.exits?.push(fromExit._id!);
-                await db.update({ id: newRoom._id }, newRoom);
+                await db.update({ _id: newRoom._id }, newRoom);
                 output.push(
-                  `Exit (**${fromName
-                    .split(";")[0]
-                    .trim()}**) opened to **${curRoom!.name.trim()}**`
+                  `Exit (**${parser
+                    .colorSub(fromName.split(";")[0])
+                    .trim()}**) opened to **${parser.colorSub(
+                    curRoom!.name.trim()
+                  )}**`
                 );
               }
             }
@@ -90,7 +95,10 @@ export default () => {
         }
       }
       // Send off the message!
-      return payload(req, { message: output.join("\n") });
+      return payload(req, {
+        message: output.join("\n"),
+        data: { en, tar: en },
+      });
     },
   });
 };

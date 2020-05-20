@@ -1,6 +1,7 @@
 import mu, { db, payload, cmds } from "../mu";
 import { MuRequest } from "../types";
 import { sha512 } from "js-sha512";
+import { dbref } from "../api/database";
 
 export default () => {
   mu.cmd({
@@ -41,9 +42,9 @@ export default () => {
       } else {
         // No character, continue!
         const char = await db.create({
+          dbref: await dbref(),
           attributes: [],
           contents: [],
-          desc: "You see nothing special.",
           flags,
           location: room?._id || "000",
           name: user,

@@ -85,6 +85,10 @@ export class Parser {
         .replace(/%t;/gi, "&nbsp;".repeat(4))
         .replace(/%b;/gi, "&nbsp;")
         .replace(/%r;/gi, "</br>")
+
+        // HTML escape codes!
+        .replace(/%</g, "&lt;")
+        .replace(/%>/g, "&gt;")
     );
   }
 

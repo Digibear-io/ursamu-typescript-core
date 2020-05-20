@@ -120,10 +120,12 @@ export default () => {
 
           // Substitute out color code for html markup.
           contents = parser.colorSub(contents);
+          const desc =
+            attrs.get(en!, tar, "description") || "You see nothing special.";
 
           return payload(req, {
             command: "desc",
-            message: `${name}` + tar.desc + "\n" + contents,
+            message: `${name}\n${desc}\n${contents}`,
             data: { en, tar: en, look },
           });
         } else {

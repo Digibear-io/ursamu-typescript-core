@@ -1,7 +1,7 @@
 import DataStore from "nedb";
 import { resolve } from "path";
 import { DbAdapter, DBObj } from "../types";
-import { flags } from "../mu";
+import { flags, attrs } from "../mu";
 
 export class NeDB<T> implements DbAdapter {
   path?: string;
@@ -9,6 +9,7 @@ export class NeDB<T> implements DbAdapter {
 
   constructor(path?: string) {
     this.path = path || "";
+
     this.init();
   }
 
@@ -132,17 +133,59 @@ export class NeDB<T> implements DbAdapter {
    * @param tar The target DBObj
    */
   name(en: DBObj, tar: DBObj) {
-    let name = tar.name;
-    if (tar.moniker) name = tar.moniker;
+    const moniker = attrs.get(en, tar, "moniker");
+    let name = moniker ? moniker : tar.name;
 
     if (flags.canEdit(en, tar)) {
-      return `${name}&lpar;<span style='font-weight: normal'>${flags.codes(
-        tar
-      )}</span>&rpar;`;
+      return `${name}&lpar;<span style='font-weight: normal'>#${
+        tar.dbref
+      }${flags.codes(tar)}</span>&rpar;`;
     } else {
       return name;
     }
   }
 }
 
-export default new NeDB<DBObj>(resolve(__dirname, "../../data/ursa.db"));
+const dbase = new NeDB<DBObj>(resolve(__dirname, "../../data/ursa.db"));
+
+const index = async () => {
+  // Get a list of all used dbrefs.
+  const _index = (await dbase.find({})).map((obj) => obj.dbref);
+  const mia: number[] = _index.reduce(function (acc: number[], cur, ind, arr) {
+    var diff = cur - arr[ind - 1];
+    if (diff > 1) {
+      var i = 1;
+      while (i < diff) {
+        acc.push(arr[ind - 1] + i);
+        i++;
+      }
+    }
+    return acc;
+  }, []);
+
+  return [_index, mia];
+};
+
+export const dbref = async (ref?: number): Promise<number> => {
+  const [_index, mia] = await index();
+  const curr = _index.sort().pop() || 0;
+  if (ref) {
+    if (_index.indexOf(ref) != -1) {
+      return ref;
+    } else if (mia.length > 0) {
+      mia.shift();
+    } else {
+      if (curr) {
+        return curr + 1;
+      } else {
+        return curr + 1;
+      }
+    }
+  } else if (mia) {
+    mia.shift();
+  }
+
+  return curr + 1;
+};
+
+export default dbase;

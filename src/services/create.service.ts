@@ -2,6 +2,7 @@ import mu, { db, payload } from "../mu";
 import shortid from "shortid";
 import { sha512 } from "js-sha512";
 import { MuRequest } from "../types";
+import { dbref } from "../api/database";
 
 const create = async (req: MuRequest): Promise<MuRequest> => {
   const { user, password } = req.payload.data;
@@ -38,8 +39,8 @@ const create = async (req: MuRequest): Promise<MuRequest> => {
     // No character, continue!
     const char = await db.create({
       attributes: [],
+      dbref: await dbref(),
       contents: [],
-      desc: "You see nothing special.",
       flags,
       location: room?._id || "000",
       name: user,

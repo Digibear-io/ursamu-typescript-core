@@ -1,5 +1,5 @@
 import { MuRequest } from "../types";
-import mu, { cmds, db, payload } from "../mu";
+import mu, { cmds, db, payload, attrs } from "../mu";
 
 export default () => {
   cmds.add({
@@ -11,19 +11,20 @@ export default () => {
       const en = mu.connections.get(req.socket.id);
 
       if (en) {
+        const name = attrs.get(en, en, "moniker") || en.name;
         switch (args[1].toLowerCase()) {
           case "pose":
-            output += `${en.moniker || en.name} ${args[2]}`;
+            output += `${name} ${args[2]}`;
             break;
           case ":":
-            output += `${en.moniker || en.name} ${args[2]}`;
+            output += `${name} ${args[2]}`;
             break;
           case ";":
-            output += `${en.moniker || en.name}${args[2]}`;
+            output += `${name}${args[2]}`;
             break;
         }
       }
       return payload(req, { message: output });
-    }
+    },
   });
 };

@@ -1,4 +1,4 @@
-import mu, { db, payload, flags } from "../mu";
+import mu, { db, payload, flags, attrs } from "../mu";
 import { MuRequest, DBObj } from "../types";
 
 export default () => {
@@ -12,7 +12,7 @@ export default () => {
 
       if (tar) {
         if (flags.canEdit(en, tar)) {
-          tar.desc = args[2];
+          await attrs.set(en, tar, "description", args[2]);
           await db.update({ _id: tar._id }, tar);
           return payload(req, {
             command: "command",
