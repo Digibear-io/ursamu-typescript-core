@@ -133,7 +133,7 @@ export class NeDB<T> implements DbAdapter {
    * @param tar The target DBObj
    */
   name(en: DBObj, tar: DBObj) {
-    const moniker = attrs.get(en, tar, "moniker");
+    const moniker = attrs.get(en, tar, "moniker")?.value;
     let name = moniker ? moniker : tar.name;
 
     if (flags.canEdit(en, tar)) {

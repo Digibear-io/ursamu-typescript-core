@@ -118,6 +118,24 @@ export default () => {
             }
           }
 
+          // format exits
+          const exitList = [];
+          let exits = "";
+          if (tar.exits) {
+            // Go through and get the DBObj of each exit.
+            for (const exit of tar.exits) {
+              exitList.push((await db.get({ _id: exit })) as DBObj);
+            }
+
+            if (exitList.length > 0) {
+              exits += `\n\nExits:\n${exitList
+                .map((exit) =>
+                  parser.colorSub(db.name(en!, exit).split(";")[0])
+                )
+                .join(" ")}`;
+            }
+          }
+
           // Substitute out color code for html markup.
           contents = parser.colorSub(contents);
           const desc =
@@ -125,7 +143,7 @@ export default () => {
 
           return payload(req, {
             command: "desc",
-            message: `${name}\n${desc}\n${contents}`,
+            message: `${name}\n${desc}\n${contents}${exits}`,
             data: { en, tar: en, look },
           });
         } else {
