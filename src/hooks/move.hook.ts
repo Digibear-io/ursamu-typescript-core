@@ -32,13 +32,11 @@ export default async (req: MuRequest) => {
       } else if (exits.length === 1) {
         // if a single exit matches, change rooms!
         req.socket.leave(en.location);
-        console.log(attrs.get(en, exits[0], "toroom"));
         en.location = attrs.get(en, exits[0], "toroom")!.value || en.location;
         req.payload.message = "";
         // join new room and update player object
         req.socket.join(en.location);
         await db.update({ _id: en._id }, en);
-        console.log(await cmds.force(req, "look"));
         mu.send(await cmds.force(req, "look"));
         req.payload.data.matched = true;
       }
