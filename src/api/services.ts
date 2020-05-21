@@ -26,6 +26,7 @@ export class Service {
     for (const hook of this._hooks.get(phase)!.values()) {
       const res = await hook(req);
       req = res ? res : req;
+      if (req.payload.data.matched === true) return req;
     }
 
     return req;

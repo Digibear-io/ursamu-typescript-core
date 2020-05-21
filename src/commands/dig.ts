@@ -1,7 +1,5 @@
-import mu, { db, payload, parser } from "../mu";
-import shortid from "shortid";
+import mu, { db, payload, parser, dbref, attrs } from "../mu";
 import { MuRequest, DBObj } from "../types";
-import { dbref } from "../api/database";
 
 export default () => {
   mu.cmd({
@@ -50,6 +48,10 @@ export default () => {
           // enactor's current location and check for a return
           // exit.
           if (toExit) {
+            // add the toRoom attribute to the exit.
+            attrs.set(en, toExit, "toroom", newRoom!._id);
+            await db.update({ _id: toExit._id }, toExit);
+
             output.push(
               `Exit (**${parser
                 .colorSub(toName.split(";")[0])
@@ -58,8 +60,8 @@ export default () => {
               )}**`
             );
 
-            // Add the exit to the current room
             if (curRoom) {
+              // Add the exit to the current room
               curRoom.exits?.push(toExit._id!);
               await db.update({ _id: curRoom._id }, curRoom);
             }
@@ -80,6 +82,10 @@ export default () => {
               // If the exit was created, add it to the newRoom
               // exit list.
               if (fromExit) {
+                // add the toRoom attribute to the exit.
+                attrs.set(en, fromExit, "toroom", curRoom!._id);
+                await db.update({ _id: fromExit._id }, fromExit);
+
                 newRoom.exits?.push(fromExit._id!);
                 await db.update({ _id: newRoom._id }, newRoom);
                 output.push(
