@@ -1,8 +1,8 @@
-import mu, { db, payload } from "../mu";
-import shortid from "shortid";
+import mu, { db, payload, cmds } from "../mu";
 import { sha512 } from "js-sha512";
 import { MuRequest } from "../types";
 import { dbref } from "../api/database";
+import jwt from "jsonwebtoken";
 
 const create = async (req: MuRequest): Promise<MuRequest> => {
   const { user, password } = req.payload.data;
@@ -50,15 +50,22 @@ const create = async (req: MuRequest): Promise<MuRequest> => {
 
     mu.connections.set(req.socket.id, char);
     req.socket.join(char.location);
-    return payload(req, {
-      command: "connected",
-      message: "Welcome to UrsaMU",
-      data: {
-        en: char,
-        tar: char,
-      },
-    });
+    const token = jwt.sign(char._id!, "secret");
+    mu.send(
+      payload(req, {
+        command: "connected",
+        message: "Welcome to UrsaMU",
+        data: {
+          en: char,
+          tar: char,
+          token,
+        },
+      })
+    );
+    mu.send(await cmds.force(req, "look"));
   }
+  req.payload.message = "";
+  return payload(req);
 };
 
 export default mu.service("create", create);
