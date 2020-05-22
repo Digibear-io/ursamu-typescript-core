@@ -227,8 +227,18 @@ export class MU extends EventEmitter {
         if (res.payload.data.matched) {
           this.send(res);
         } else if (this.connections.has(res.socket.id)) {
+          const en = this.connections.get(res.socket.id);
           res.payload.message = "Huh? Type '**help**' for help.";
-          this.send(res);
+          this.send({
+            socket,
+            payload: {
+              command: res.payload.command,
+              message: res.payload.message,
+              data: {
+                en,
+              },
+            },
+          });
         } else {
           res.payload.message = "";
           this.send(res);
