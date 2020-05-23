@@ -104,7 +104,7 @@ export class NeDB<T> implements DbAdapter {
    * @param en The enactor DBObj
    * @param tar the target string to search for
    */
-  target(en: DBObj, tar: string) {
+  async target(en: DBObj, tar: string) {
     if (tar) {
       tar = tar.toLowerCase();
       if (tar === "me") {
@@ -114,11 +114,17 @@ export class NeDB<T> implements DbAdapter {
       } else {
         return this.get({
           $where: function () {
-            if (this.name.toLowerCase() === tar) return true;
+            if (
+              this.name.toLowerCase() === tar ||
+              this._id.toLowerCase() === tar.toLowerCase()
+            )
+              return true;
             return false;
           },
         });
       }
+    } else if (await this.get({ _id: tar })) {
+      return this.get({ _id: tar });
     } else {
       return this.get({ _id: en.location });
     }

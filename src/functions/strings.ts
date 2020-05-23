@@ -1,6 +1,7 @@
-import { parser, db } from "../mu";
+import mu, { parser, db, attrs } from "../mu";
 import { DBObj, Scope, Expression } from "../types";
 import { hydrate } from "../utils";
+import { fmt } from "../api/config";
 
 // In order to keep things DRY, creating a function expression to render filler strings.
 const repeatString = (string = " ", length: number) => {
@@ -128,3 +129,18 @@ parser.add("name", async (en: DBObj, args: Expression[], scope: Scope) => {
     return "#-1";
   }
 });
+
+// Short-desc
+parser.add(
+  "short-desc",
+  async (en: DBObj, args: Expression[], scope: Scope) => {
+    const arg = await hydrate(en, scope, ...args);
+    const tar = await db.target(en, arg[0]);
+    if (tar) {
+      return (
+        attrs.get(en, tar, "short-desc") ||
+        parser.colorSub("%cgrey;&short-desc me=%<desc%>%cn;")
+      );
+    }
+  }
+);

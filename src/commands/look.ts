@@ -139,7 +139,8 @@ export default () => {
           // Substitute out color code for html markup.
           contents = parser.colorSub(contents);
           const desc =
-            attrs.get(en!, tar, "description") || "You see nothing special.";
+            attrs.get(en!, tar, "description")?.value ||
+            "You see nothing special.";
 
           return payload(req, {
             command: "desc",

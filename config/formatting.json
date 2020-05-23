@@ -1,0 +1,7 @@
+{
+  "header": {
+    "before": "%cgold;<%cgoldenrod<%cn;",
+    "after": "%cgoldenrod;>&cgold;>%cn;",
+    "seperator": "%cdarkblue;%cblue;-%cn;"
+  }
+}

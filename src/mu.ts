@@ -14,6 +14,7 @@ import config from "./api/config";
 import flags from "./api/flags";
 import attrs from "./api/attributes";
 import services from "./api/services";
+import help from "./api/helpsys";
 
 import {
   DBObj,
@@ -326,4 +327,4 @@ export const payload = (req: MuRequest, payload?: Payload): MuRequest => {
 };
 
 export default MU.getInstance();
-export { cmds, db, parser, flags, config, attrs, dbref };
+export { cmds, db, parser, flags, config, attrs, dbref, help };

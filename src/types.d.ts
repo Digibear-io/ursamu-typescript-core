@@ -98,3 +98,11 @@ export type Message = {
 };
 
 export type Plugin = (mu: MU) => {};
+
+export type HelpEntry = {
+  name: string;
+  category?: string;
+  entry: string;
+  related?: string[];
+  visible: Boolean;
+};

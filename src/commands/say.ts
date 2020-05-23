@@ -1,5 +1,5 @@
 import { MuRequest, DBObj } from "../types";
-import mu, { cmds, db, payload } from "../mu";
+import mu, { cmds, db, payload, help } from "../mu";
 
 export default () => {
   cmds.add({

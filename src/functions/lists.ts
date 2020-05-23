@@ -2,6 +2,7 @@ import { parser } from "../mu";
 import { DBObj, Scope, Expression } from "../types";
 import { hydrate } from "../utils";
 
+// List Iterator
 parser.add("iter", async (en: DBObj, args: Expression[], scope: Scope) => {
   const arg = await hydrate(en, scope, ...args);
 
@@ -22,4 +23,26 @@ parser.add("iter", async (en: DBObj, args: Expression[], scope: Scope) => {
     }
   }
   return output.join(oDelim);
+});
+
+// Columns
+// Usage: columns(<list>, <columns>[,<idelim>][,<fill>])
+parser.add("columns", async (en: DBObj, args: Expression[], scope: Scope) => {
+  let output = "";
+  const arg = await hydrate(en, scope, ...args);
+  const cols = parseInt(arg[1], 10) || 4;
+  const sep = arg[2] || " ";
+
+  // Start building the flexbox based rows.
+  output += "<div style='display: flex; flex-flow: row wrap'>";
+  output += arg[0]
+    .split(sep)
+    .map(
+      (entry: string) =>
+        `<div style='flex-basis: ${780 / cols}px'>${entry}</div>`
+    )
+    .join(" ");
+  output += "</div>";
+
+  return output;
 });
