@@ -214,6 +214,24 @@ export class MU extends EventEmitter {
           const player = this.connections.get(socket.id);
           if (player) {
             await flags.setFlag(player, "!connected");
+
+            // If the player isn't dark, send a disconnect message to the
+            // room.
+            if (!flags.hasFlags(player, "dark")) {
+              const room = await db.get({ _id: player.location });
+              if (room) {
+                this.send({
+                  socket,
+                  payload: {
+                    command: "message",
+                    message: `${player.name} has disconnected`,
+                    data: {
+                      en: player,
+                    },
+                  },
+                });
+              }
+            }
           }
         }
       });

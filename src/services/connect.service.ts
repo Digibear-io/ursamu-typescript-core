@@ -39,6 +39,20 @@ const connect = async (req: MuRequest): Promise<MuRequest> => {
         const token = jwt.sign(players[0]._id!, "secret");
 
         await flags.setFlag(players[0], "connected");
+
+        // if the character isn't dark, show the room that they've
+        // connected.
+        if (!flags.hasFlags(players[0], "dark")) {
+          mu.send(
+            payload(req, {
+              command: "message",
+              message: `${players[0].name} has connected.`,
+              data: {
+                en: players[0],
+              },
+            })
+          );
+        }
         mu.send(
           payload(req, {
             command: "connected",
