@@ -1,10 +1,5 @@
 import io, { Server as IOServer, Socket } from "socket.io";
-import {
-  Server as HTTPServer,
-  createServer,
-  ServerResponse,
-  IncomingMessage,
-} from "http";
+import { Server as HTTPServer, Server } from "http";
 import { EventEmitter } from "events";
 import db, { dbref } from "./api/database";
 import parser from "./api/parser";
@@ -15,7 +10,9 @@ import flags from "./api/flags";
 import attrs from "./api/attributes";
 import services from "./api/services";
 import help from "./api/helpsys";
-
+import express from "express";
+import cors from "cors";
+import bearerToken from "express-bearer-token";
 import {
   DBObj,
   MuFunction,
@@ -25,6 +22,10 @@ import {
   Plugin,
 } from "./types";
 import { loadDir, loadText } from "./utils";
+import { Application } from "express";
+import authenticate from "./middleware/authenticate";
+import apiRoute from "./routes/api.route";
+import apiLogin from "./routes/login.route";
 
 /**
  * The main MU class.
@@ -32,8 +33,8 @@ import { loadDir, loadText } from "./utils";
  * pieces of Ursamu into a workable facade.
  */
 export class MU extends EventEmitter {
-  http: HTTPServer | undefined;
   io: IOServer | undefined;
+  private _http: HTTPServer | undefined;
   private static instance: MU;
   connections: Map<string, DBObj>;
   private _plugins: Plugin[];
@@ -42,7 +43,7 @@ export class MU extends EventEmitter {
   private constructor() {
     super();
     this.io;
-    this.http;
+    this._http;
     this.connections = new Map();
     this._plugins = [];
     this.text = new Map();
@@ -57,52 +58,6 @@ export class MU extends EventEmitter {
     }
 
     return MU.instance;
-  }
-
-  /**
-   * Attach to a Socket.io  server implementation.
-   * @param io The Socket.io server to attach too.
-   */
-  attach(io: IOServer) {
-    this.io = io;
-    return this;
-  }
-
-  /**
-   * Attach to an HTTP server instance.
-   * @param server The HTTP server instance to attach to.
-   */
-  server(server: HTTPServer) {
-    this.http = server;
-    this.io = io(server);
-    this.start();
-    return this;
-  }
-
-  /**
-   * Create an HTTP server from within the UrsaMU library.
-   * @param port The port the HTTP Server should listen on.
-   */
-  serve(port?: number) {
-    this.http = createServer(this.httpHandler).listen(
-      (port ? port : config.game.port) || 3000
-    );
-    this.io = io(this.http);
-    this.start();
-    console.log(
-      `UrsaMU started on port ${(port ? port : config.game.port) || 3000}`
-    );
-    return this;
-  }
-
-  /**
-   * Create a simple HTTP request handler.
-   * @param req Incoming message
-   * @param res Server response
-   */
-  httpHandler(req: IncomingMessage, res: ServerResponse) {
-    res.write("Welcome to Ursamu");
-    res.end();
   }
 
   /**
@@ -153,8 +108,9 @@ export class MU extends EventEmitter {
    * @param name The name of the service
    * @param service The service to be added to the system
    */
-  service(name: string, service: MuService) {
-    services.register(name, service);
+  service(name: string, service?: MuService) {
+    if (service) return services.register(name, service);
+    return services.get(name);
   }
 
   /**
@@ -207,14 +163,19 @@ export class MU extends EventEmitter {
     }
   }
 
+  attach(server: Server) {
+    this._http = server;
+    this.start();
+  }
+
   /**
    * Start the game engine.
-   * @param callback An optional function to execute when the
-   * MU startup process ends
    */
   private async start() {
     // Handle client connections.
     console.log("UrsaMU Booting...");
+    this.io = io(this._http);
+
     this.io?.on("connection", async (socket: Socket) => {
       // Whenever a socket sends a message, process it, and
       // return the results.

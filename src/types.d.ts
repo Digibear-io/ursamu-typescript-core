@@ -106,3 +106,12 @@ export type HelpEntry = {
   related?: string[];
   visible: Boolean;
 };
+
+declare namespace Express {
+  export interface Request {
+    char: any;
+  }
+  export interface Response {
+    char: any;
+  }
+}
