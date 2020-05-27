@@ -14,7 +14,7 @@
 [Data Structure](#data-structure)<br>
 [Flags](#flags)<br>
 [Softcode Commands](#commands)<br>
-[Mushcode Functions](#functions)<br>
+[Scripting](#scripting)<br>
 [Services](#Services)<br>
 [Hooks](#hooks)<br>
 [Plugins](#plugins)<br>
@@ -23,60 +23,11 @@
 
 ## Installation
 
-`coming soon!` UrsaMU isn't stable enough for testing yet! :)
+`coming soon!` UrsaMU isn't quite stable enough for testing yet! We're getting there though :)
 
 ## Basic Usage
 
-**UrsaMU** Can bind to any webserver software that runs on the base Node.js http(s) modules (Express, Next, Sapper, Koa, etc, etc...), or it can run it's own standalone http server with some very basic request handling functionality.
-
-### Node.js HTTP
-
-```JavaScript
-import mu from "@ursamu/core";
-import {createServer} from "http";
-
-// Start a server and bind Ursamu to it.
-const server = createServer(/* handler */);
-mu.server(server).listen(8000);
-```
-
-### With Express
-
-```JavaScript
-import mu from "@ursamu/core";
-import express from "express";
-
-// Create an express app
-const app = express();
-
-// create a new route for the app.
-app.get("/", (req:Request, res: Response) => {
-  res.send("<h1>Welcome to UrsaMU!</h1>");
-  res.end();
-})
-
-// Attach the mu to the express app, and listen for connections.
-mu.server(app).listen(8000);
-```
-
-### Or Standalone.
-
-```JavaScript
-mu.serve(8000)
-```
-
-The same goes for the **Socket.io** implementation. If you have a specality setup for your communication layer, **UrsaMU** can bind to it.
-
-```JavaScript
-import io from "Socket.io";
-import http from "http";
-
-const server = http.createServer(/* handler like express */);
-const IOServer = io(server);
-
-mu.attach(IOServer);
-server.listen(8000)
-```
+First make sure to edit your config files in ./config to taste, then `npm start dev`.
 
 ## Data Structure
 
@@ -131,18 +82,7 @@ cmds.add({
 
 ## Functions
 
-Adding a mushcode function is similar to adding a command, except working with the parser instead of the `cmds` object. Functions can be evaluated by commands. As with traditional mushcode, adding square braces `[]` around a function expression imbedded within a string will evaluate the code before the string is returned.
-
-```JavaScript
-import { parser, DBObj, Scope } from "@ursamu/core";
-
-// Add a list of numbers together `add(1,2,3,4)`.
-parser.add("add", (en: DBObj, args: string[], scope: Scope) => {
-  return args
-    .map(arg => parseInt(arg) ? parseInt(arg) : 0)
-    .reduce((prev: number, curr: number) => prev += curr, 0);
-})
-```
+I'm still working through functions at the moment,
 
 ## Services
 
@@ -174,7 +114,7 @@ Hooks are reusable pieces of code, that can be executed on multiple services. Th
 ```JavaScript
   // From our example above, we can extend it with a couple of hooks..
   // This hook updates the message of the request object before returning it
-  service.get("somename").hook("before", async (req: MuRequest) =>
+  mu.service("somename").hook("before", async (req: MuRequest) =>
     payload(req, {
       message: "This came from the hook!",
     })

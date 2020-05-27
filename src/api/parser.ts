@@ -4,7 +4,9 @@ import { resolve } from "path";
 import { loadDir } from "../utils";
 import services from "./services";
 import { payload } from "../mu";
-import { MuFunction, MuRequest } from "../types";
+import { MuFunction, MuRequest, DBObj, Scope } from "../types";
+import { VM } from "vm2";
+import vmGlobals from "./vmGlobals";
 
 export class Parser {
   private static instance: Parser;
@@ -68,6 +70,25 @@ export class Parser {
         .replace(/%</g, "&lt;")
         .replace(/%>/g, "&gt;")
     );
+  }
+
+  parse(en: DBObj, text: string, scope: Scope) {
+    const vm = new VM({ sandbox: { ...vmGlobals, scope, en } });
+    try {
+      return `${vm.run(text)}`;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async string(en: DBObj, text: string, scope: Scope) {
+    return text.replace(/{{([^}]+)}}/g, (match: string) => {
+      try {
+        return this.parse(en, match, scope);
+      } catch (error) {
+        return error.message;
+      }
+    });
   }
 }
 
