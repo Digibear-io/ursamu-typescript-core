@@ -72,23 +72,13 @@ export class Parser {
     );
   }
 
-  parse(en: DBObj, text: string, scope: Scope) {
-    const vm = new VM({ sandbox: { ...vmGlobals, scope, en } });
+  parse(en: DBObj, text: string) {
+    const vm = new VM({ sandbox: vmGlobals });
     try {
       return `${vm.run(text)}`;
     } catch (error) {
       throw error;
     }
-  }
-
-  async string(en: DBObj, text: string, scope: Scope) {
-    return text.replace(/{{([^}]+)}}/g, (match: string) => {
-      try {
-        return this.parse(en, match, scope);
-      } catch (error) {
-        return error.message;
-      }
-    });
   }
 }
 

@@ -1,6 +1,7 @@
 import mu, { db, payload, flags, attrs, parser } from "../mu";
 import { DBObj, MuRequest } from "../types";
 import { Client } from "socket.io";
+import Nameformat from "./@nameformat";
 
 export interface LookData {
   [index: string]: any;
@@ -73,7 +74,14 @@ export default () => {
           // Either use the object's name, or name format depending
           // on if it exists, and the looker is within the target.
           const namefmt = attrs.get(en!, tar, "nameformat");
-          let name = parser.colorSub(db.name(en!, tar) + "\n");
+          let name = db.name(en!, tar);
+
+          // if the enactor is within the target, use the @nameformat
+          // value for display.
+          if (namefmt && en!.location === tar._id) {
+            let tempName = namefmt.value.replace(/%0/g, name);
+            name = parser.parse(en!, tempName);
+          }
 
           // Either use the object's contents, or  conformat depending
           // on if it exists, and the looker is within the target.
