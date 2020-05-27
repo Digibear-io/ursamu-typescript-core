@@ -66,15 +66,3 @@ export class Singleton {
     return Singleton._instance;
   }
 }
-
-export const hydrate = async (
-  en: DBObj,
-  scope: Scope,
-  ...args: Expression[]
-) => {
-  const output = [];
-  for (const arg of args) {
-    output.push(await parser.evaluate(en, arg, scope));
-  }
-  return output;
-};

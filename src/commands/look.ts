@@ -73,19 +73,7 @@ export default () => {
           // Either use the object's name, or name format depending
           // on if it exists, and the looker is within the target.
           const namefmt = attrs.get(en!, tar, "nameformat");
-          let name = "";
-          if (namefmt && en!.location === tar._id) {
-            name += await parser.string(
-              en!,
-              namefmt.value.replace(/</g, "&lt;").replace(/>/g, "&gt;"),
-              {
-                "%0": db.name(en!, tar!),
-              }
-            );
-          } else {
-            name += db.name(en!, tar) + "\n";
-          }
-          name = parser.colorSub(name);
+          let name = parser.colorSub(db.name(en!, tar) + "\n");
 
           // Either use the object's contents, or  conformat depending
           // on if it exists, and the looker is within the target.
@@ -105,16 +93,10 @@ export default () => {
 
           let contents = "\n\n";
 
-          if (confmt) {
-            contents = await parser.string(en!, confmt.value, {
-              "%0": IDs,
-            });
-          } else {
-            // if target is a room, get it's players.
-            if (tar.type === "room") {
-              if (players.length > 0) {
-                contents += "Contents:\n" + players.join("\n");
-              }
+          // if target is a room, get it's players.
+          if (tar.type === "room") {
+            if (players.length > 0) {
+              contents += "Contents:\n" + players.join("\n");
             }
           }
 

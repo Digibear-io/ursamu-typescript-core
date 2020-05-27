@@ -143,9 +143,7 @@ export class NeDB<T> implements DbAdapter {
     let name = moniker ? moniker : tar.name;
 
     if (flags.canEdit(en, tar)) {
-      return `${name}&lpar;<span style='font-weight: normal'>#${
-        tar.dbref
-      }${flags.codes(tar)}</span>&rpar;`;
+      return `${name}%cn;(#${tar.dbref}${flags.codes(tar)})`;
     } else {
       return name;
     }

@@ -95,15 +95,6 @@ export class MU extends EventEmitter {
   }
 
   /**
-   * Add a mushcode function to the game.
-   * @param name Name of the function to add
-   * @param func The body of the mushcode function
-   */
-  fun(name: string, func: MuFunction) {
-    parser.add(name, func);
-  }
-
-  /**
    * Add a new service to the system.
    * @param name The name of the service
    * @param service The service to be added to the system
@@ -121,9 +112,7 @@ export class MU extends EventEmitter {
   send(res: MuRequest) {
     // Render markdown & a
     res.payload.message = md.render(
-      res.payload.message
-        ? res.payload.message.replace("\u250D", "(").replace("\u2511", ")")
-        : ""
+      res.payload.message ? res.payload.message : ""
     );
 
     // If the request doesn't have an enactor attached, try to get
